@@ -1,15 +1,23 @@
 library(shiny)
 shinyUI(fluidPage(
-	tags$title("Testing out Shiny R..."),
-	tags$h2("Historical Empires"),
-	sidebarPanel(verticalLayout(
-		tags$h2("Hi"),
-		"What's up?",
-		"Look what I made let's goooooOOOOOooooo",
-		submitButton("Eyyy a button")
-	)),
-	mainPanel(
-		checkboxInput("show","Show Chart?"),
-		plotOutput("empires")
+	tags$title("Kaplan-Meier Estimator"),
+	fluidRow(
+		column(3,
+			tags$h2("Hi"),
+			"What's up?",
+			br(),
+			"Look what I made let's goooooOOOOOooooo",
+			br(),
+			submitButton("Eyyy a button"),
+			tags$input(type="submit",onclick="alert('hi')",value="hey")
+		),
+		mainPanel(
+			checkboxInput("gender","Show by Sex?"),
+			plotOutput("selectedGraph")
+		)
+	),fluidRow(
+		column(12,
+			"Made by me."
+		)
 	)
 ))
