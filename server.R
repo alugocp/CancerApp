@@ -12,39 +12,51 @@ shinyServer(function(input,output){
 	graphNode <- function(k,gene){
 		data <- lung
 		cutoffs <- quantile(data[,gene],c(k,1-k),na.rm=TRUE)#na.rm=TRUE allows for N/A data. Remove later?
+		graphData()
 		
 		low <- subset(data,data[gene]<=cutoffs[1])
 		low$SurvObj <- with(low,Surv(time,status==2))
 		km <- survfit(SurvObj~1,data=low,conf.type="log-log")
-		plot(km,conf=F,mark.time=F,col="green")
+		lines(km,conf=F,mark.time=F,col="red")
 		
 		high <- subset(data,data[gene]>=cutoffs[2])
 		high$SurvObj <- with(high,Surv(time,status==2))
 		km <- survfit(SurvObj~1,data=high,conf.type="log-log")
-		lines(km,conf=F,mark.time=F)
+		lines(km,conf=F,mark.time=F,col="green")
+		
+		legend(850,1,c("low","high"),col=c("red","green"),lty=c(1,1))
 	}
 	graphEdge <- function(k,gene,gene1){
 		data <- lung
 		cutoffs <- c(quantile(data[,gene],c(k,1-k),na.rm=TRUE),quantile(data[,gene1],c(k,1-k),na.rm=TRUE))
+		graphData()
 		
 		lowlow <- subset(data,data[gene]<=cutoffs[1] & data[gene1]<=cutoffs[3])
 		lowlow$SurvObj <- with(lowlow,Surv(time,status==2))
 		km <- survfit(SurvObj~1,data=lowlow,conf.type="log-log")
-		plot(km,conf=F,mark.time=F,col="red")
+		lines(km,conf=F,mark.time=F,col="red")
 		
 		lowhigh <- subset(data,data[gene]<=cutoffs[1] & data[gene1]>=cutoffs[4])
 		lowhigh$SurvObj <- with(lowhigh,Surv(time,status==2))
 		km <- survfit(SurvObj~1,data=lowhigh,conf.type="log-log")
-		lines(km,conf=F,mark.time=F,col="blue")
+		lines(km,conf=F,mark.time=F,col="green")
 		
 		highhigh <- subset(data,data[gene]>=cutoffs[2] & data[gene1]>=cutoffs[4])
 		highhigh$SurvObj <- with(highhigh,Surv(time,status==2))
 		km <- survfit(SurvObj~1,data=highhigh,conf.type="log-log")
-		lines(km,conf=F,mark.time=F,col="green")
+		lines(km,conf=F,mark.time=F,col="blue")
 		
 		highlow <- subset(data,data[gene]>=cutoffs[2] & data[gene1]<=cutoffs[3])
 		highlow$SurvObj <- with(highlow,Surv(time,status==2))
 		km <- survfit(SurvObj~1,data=highlow,conf.type="log-log")
-		lines(km,conf=F,mark.time=F)
+		lines(km,conf=F,mark.time=F,col="orange")
+		
+		legend(850,1,c("low-low","low-high","high-high","high-low"),col=c("red","green","blue","orange"),lty=c(1,1))
+	}
+	graphData <- function(){
+		data <- lung
+		data$SurvObj <- with(data,Surv(time,status==2))
+		km <- survfit(SurvObj~1,data=data,conf.type="log-log")
+		plot(km,conf=F,mark.time=F,xlab="Time",ylab="Chance of Survival")
 	}
 })
