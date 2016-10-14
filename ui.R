@@ -11,7 +11,10 @@ shinyUI(fluidPage(
 			tags$input(type="submit",onclick="alert('hi')",value="hey")
 		),
 		mainPanel(
-			plotOutput("km")
+			onmouseup="selected=null",
+			plotOutput("km"),
+			tags$canvas(id="canvas",width=200,height=200,onmousedown="mousedown(event)",onmousemove="mousemove(event)"),
+			tags$script(src="frontEnd.js")
 		)
 	),fluidRow(
 		column(12,
