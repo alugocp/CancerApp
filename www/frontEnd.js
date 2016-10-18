@@ -39,13 +39,15 @@ function clickCanvas(){
 			Shiny.onInputChange("gene1","none");
 			return;
 		}
+	}
+	for(var a=0;a<nodes.length;a++){
 		for(var b=0;b<a;b++){
-			if(edgeClick(node,nodes[b])){
+			if(edgeClick(nodes[a],nodes[b])){
 				return;
 			}
 		}
 		for(var b=a+1;b<nodes.length;b++){
-			if(edgeClick(node,nodes[b])){
+			if(edgeClick(nodes[a],nodes[b])){
 				return;
 			}
 		}
@@ -145,18 +147,38 @@ function setEdges(){
 	}
 }
 
+//graphs support
+var image=undefined;
+function drawGraph(x,y){
+	var img=new Image();
+	img.src=image.src;
+	c.drawImage(img,x,y);
+}
+
 //initialize
+function setCanvasDimensions(){
+	var rect=canvas.getBoundingClientRect();
+	canvas.width=window.innerWidth-(rect.left*2);
+	canvas.height=window.innerHeight-rect.top-rect.left;
+}
 function update(){
+	setTimeout(update,100);
+	if(image==undefined){
+		image=$("img")[0];
+		return;
+	}
 	c.clearRect(0,0,canvas.width,canvas.height);
+	drawGraph(0,0);
 	drawEdges();
 	drawNodes();
 	c.strokeRect(0,0,canvas.width,canvas.height);
-	setTimeout(update,100);
 }
 c.font="10pt bold";
+$("body")[0].style.overflow="hidden";
 nodes.push(new Node("age",10,10,"wt.loss","meal.cal","sex"));
 nodes.push(new Node("wt.loss",30,10,"meal.cal","sex"));
 nodes.push(new Node("meal.cal",50,10,"sex"));
 nodes.push(new Node("sex",70,10));
+setCanvasDimensions();
 setEdges();
 update();
