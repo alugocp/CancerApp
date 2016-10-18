@@ -3,16 +3,20 @@ library(survival)
 #data <- read.table(pipe("ssh alugocp@ibissub01@umiacs.umd.edu '../../cbcb/project2-scratch/gi_visualization/validation.data.mRNA.RData'"),header=T)
 shinyServer(function(input,output){
 	output$km <- renderPlot({
-		if(input$gene1=="none"){
-			graphNode(input$quantile,input$gene)
-		}else{
-			graphEdge(input$quantile,input$gene,input$gene1)
-		}
+		tryCatch({
+			if(input$gene1=="none"){
+				graphNode(input$quantile,input$gene)
+			}else{
+				graphEdge(input$quantile,input$gene,input$gene1)
+			}
+		},error=function(e){
+			graphData("")
+		})
 	})
 	graphNode <- function(k,gene){
 		data <- lung
 		cutoffs <- quantile(data[,gene],c(k,1-k),na.rm=TRUE)#na.rm=TRUE allows for N/A data. Remove later?
-		graphData()
+		graphData(gene)
 		
 		low <- subset(data,data[gene]<=cutoffs[1])
 		low$SurvObj <- with(low,Surv(time,status==2))
@@ -29,7 +33,7 @@ shinyServer(function(input,output){
 	graphEdge <- function(k,gene,gene1){
 		data <- lung
 		cutoffs <- c(quantile(data[,gene],c(k,1-k),na.rm=TRUE),quantile(data[,gene1],c(k,1-k),na.rm=TRUE))
-		graphData()
+		graphData(c(gene," vs. ",gene1))
 		
 		lowlow <- subset(data,data[gene]<=cutoffs[1] & data[gene1]<=cutoffs[3])
 		lowlow$SurvObj <- with(lowlow,Surv(time,status==2))
@@ -53,10 +57,10 @@ shinyServer(function(input,output){
 		
 		legend(850,1,c("low-low","low-high","high-high","high-low"),col=c("red","green","blue","orange"),lty=c(1,1))
 	}
-	graphData <- function(){
+	graphData <- function(label){
 		data <- lung
 		data$SurvObj <- with(data,Surv(time,status==2))
 		km <- survfit(SurvObj~1,data=data,conf.type="log-log")
-		plot(km,conf=F,mark.time=F,xlab="Time",ylab="Chance of Survival")
+		plot(km,conf=F,mark.time=F,xlab="Time",ylab="Chance of Survival",main=label)
 	}
 })
