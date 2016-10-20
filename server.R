@@ -63,4 +63,26 @@ shinyServer(function(input,output){
 		km <- survfit(SurvObj~1,data=data,conf.type="log-log")
 		plot(km,conf=F,mark.time=F,xlab="Time",ylab="Chance of Survival",main=label)
 	}
+	output$nodeData1 <- renderPrint({
+		"App"
+	})
+	output$nodeData <- renderPrint({
+		gene <- input$searched
+		table <- list(
+			c("age","wt.loss","meal.cal","sex"),
+			c("wt.loss","age","meal.cal","sex"),
+			c("meal.cal","age","wt.loss","sex"),
+			c("sex","age","wt.loss","meal.cal"),
+			c("pat.karno","ph.karno","ph.ecog","inst"),
+			c("ph.karno","pat.karno","ph.ecog","inst"),
+			c("ph.ecog","pat.karno","ph.karno","inst"),
+			c("inst","pat.karno","ph.karno","ph.ecog")
+		)
+		for(node in table){
+			if(node[1]==gene){
+				print(node)
+				break
+			}
+		}
+	})
 })
