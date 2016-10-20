@@ -13,7 +13,7 @@ function formatClick(e){
 }
 function mousedown(e){
 	formatClick(e);
-	for(var a=0;a<nodes.length;a++){
+	for(var a=nodes.length-1;a>=0;a--){
 		if(distance(nodes[a],e.x,e.y)<nodes[a].radius){
 			selected=nodes[a];
 			//lastmouse=[e.x,e.y];
@@ -40,8 +40,11 @@ function clickCanvas(){
 			return;
 		}
 	}
-	for(var a=0;a<nodes.length;a++){
-		for(var b=0;b<a;b++){
+	for(var a=1;a<nodes.length;a++){
+		if(edgeClick(nodes[0],nodes[a])){
+			return;
+		}
+		/*for(var b=0;b<a;b++){
 			if(edgeClick(nodes[a],nodes[b])){
 				return;
 			}
@@ -50,7 +53,7 @@ function clickCanvas(){
 			if(edgeClick(nodes[a],nodes[b])){
 				return;
 			}
-		}
+		}*/
 	}
 }
 function edgeClick(node,node1){
@@ -117,23 +120,24 @@ function drawNodes(){
 		c.closePath();
 		c.fill();
 		c.fillStyle="black";
-		c.fillText(node.name,node.x-(node.radius-5),node.y+5);
+		var delta=c.measureText(node.name).width/2;
+		c.fillText(node.name,node.x-delta,node.y+5);
 	}
 }
 function drawEdges(){
 	c.strokeStyle="gray";
 	c.lineWidth=3;
-	for(var a=0;a<nodes.length;a++){
-		var node=nodes[a];
-		for(var b=0;b<node.connections.length;b++){
-			var node1=nodes[node.connections[b]];
-			c.beginPath();
-			c.moveTo(node.x,node.y);
-			c.lineTo(node1.x,node1.y);
-			c.stroke();
-			c.closePath();
-		}
+	//for(var a=0;a<nodes.length;a++){
+	var node=nodes[0];
+	for(var b=0;b<node.connections.length;b++){
+		var node1=nodes[node.connections[b]];
+		c.beginPath();
+		c.moveTo(node.x,node.y);
+		c.lineTo(node1.x,node1.y);
+		c.stroke();
+		c.closePath();
 	}
+	//}
 }
 function setEdges(){
 	for(var a=0;a<nodes.length;a++){
@@ -146,13 +150,42 @@ function setEdges(){
 		}
 	}
 }
+var nodeData="";
+function populateNodes(){
+	while(nodes.length>0){
+		nodes.splice(0,1);
+	}
+	var data=nodeData.split(" ");
+	data.splice(0,1);
+	for(var a=0;a<data.length;a++){
+		if(data[a].substring(0,1)=="\""){
+			data[a]=data[a].substring(1,data[a].length-1);
+		}else{
+			data.splice(a,1);
+			a--;
+		}
+	}
+	var construct="nodes.splice(0,0,new Node(\""+data[0]+"\",530,70";
+	for(var a=1;a<data.length;a++){
+		construct+=",\""+data[a]+"\"";
+		nodes.push(new Node(data[a],530+(a*100),70,data[0]));
+	}
+	construct+="));";
+	eval(construct);
+	setEdges();
+}
 
 //graphs support
 var image=undefined;
 function drawGraph(x,y){
 	var img=new Image();
 	img.src=image.src;
-	c.drawImage(img,x,y);
+	var scale=0.75
+	c.translate(x,y);
+	c.scale(scale,scale);
+	c.drawImage(img,0,0);
+	c.scale(1/scale,1/scale);
+	c.translate(-x,-y);
 }
 
 //initialize
@@ -167,18 +200,28 @@ function update(){
 		image=$("img")[0];
 		return;
 	}
+	var data=document.getElementById("nodeData").innerHTML;
+	if(nodeData!=data){
+		nodeData=data;
+		populateNodes();
+	}
 	c.clearRect(0,0,canvas.width,canvas.height);
 	drawGraph(0,0);
 	drawEdges();
 	drawNodes();
+	c.strokeStyle="black";
 	c.strokeRect(0,0,canvas.width,canvas.height);
 }
 c.font="10pt bold";
 $("body")[0].style.overflow="hidden";
-nodes.push(new Node("age",10,10,"wt.loss","meal.cal","sex"));
-nodes.push(new Node("wt.loss",30,10,"meal.cal","sex"));
-nodes.push(new Node("meal.cal",50,10,"sex"));
-nodes.push(new Node("sex",70,10));
+/*nodes.push(new Node("age",10,10,"wt.loss","meal.cal","sex"));
+nodes.push(new Node("wt.loss",30,10,"meal.cal","sex","age"));
+nodes.push(new Node("meal.cal",50,10,"sex","wt.loss","age"));
+nodes.push(new Node("sex",70,10,"meal.cal","wt.loss","age"));
+nodes.push(new Node("pat.karno",90,10,"ph.karno","ph.ecog","inst"));
+nodes.push(new Node("ph.karno",110,10,"ph.ecog","inst","pat.karno"));
+nodes.push(new Node("ph.ecog",130,10,"inst","ph.karno","pat.karno"));
+nodes.push(new Node("inst",150,10,"ph.ecog","ph.karno","pat.karno"));*/
 setCanvasDimensions();
 setEdges();
 update();
