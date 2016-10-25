@@ -44,33 +44,35 @@ function clickCanvas(){
 		if(edgeClick(nodes[0],nodes[a])){
 			return;
 		}
-		/*for(var b=0;b<a;b++){
-			if(edgeClick(nodes[a],nodes[b])){
-				return;
-			}
-		}
-		for(var b=a+1;b<nodes.length;b++){
-			if(edgeClick(nodes[a],nodes[b])){
-				return;
-			}
-		}*/
 	}
 }
 function edgeClick(node,node1){
 	var x=mouse[0];
 	var y=mouse[1];
-	if((x>node.x)!=(x>node1.x)){
+	if((x>node.x)!=(x>node1.x) || (node.x==node1.x)){
 		var m=(node.y-node1.y)/(node.x-node1.x);
-		var expectedY;
-		if(node.x<node1.x){
-			expectedY=(m*(x-node.x))+node.y;
+		if(Math.abs(m)==Infinity){
+			if((y>node.y)!=(y>node1.y)){
+				if(Math.abs(x-node.x)<Node.edge){
+					Shiny.onInputChange("gene",node.name);
+					Shiny.onInputChange("gene1",node1.name);
+					return true;
+				}
+			}
+			return false;
 		}else{
-			expectedY=(m*(x-node1.x))+node1.y;
-		}
-		if(Math.abs(y-expectedY)<4){
-			Shiny.onInputChange("gene",node.name);
-			Shiny.onInputChange("gene1",node1.name);
-			return true;
+			var expectedY;
+			if(node.x<node1.x){
+				expectedY=(m*(x-node.x))+node.y;
+			}else{
+				expectedY=(m*(x-node1.x))+node1.y;
+			}
+			var leniency=Math.abs(Node.edge/Math.cos(Math.atan(m)));
+			if(Math.abs(y-expectedY)<leniency){
+				Shiny.onInputChange("gene",node.name);
+				Shiny.onInputChange("gene1",node1.name);
+				return true;
+			}
 		}
 	}
 	return false;
@@ -92,7 +94,7 @@ function distance(){
 
 //class definitions
 function Node(name,x,y){
-	//Node.radius=10;
+	Node.edge=5;
 	this.radius=(c.measureText(name).width/2)+5;
 	this.x=x;
 	this.y=y;
@@ -108,8 +110,18 @@ function Node(name,x,y){
 
 //nodes support
 function getColor(name){
-	var colors=["red","blue","green","orange","purple","yellow"];
-	return colors[Math.floor(Math.random()*colors.length)];
+	var chars=["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","."];
+	var hex=["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"];
+	var color="";
+	var i=0;
+	while(color.length<6){
+		if(i>=name.length){
+			i=0;
+		}
+		color+=hex[chars.indexOf(name.substring(i,i+1).toLowerCase())%hex.length];
+		i++;
+	}
+	return "#"+color;
 }
 function drawNodes(){
 	for(var a=0;a<nodes.length;a++){
@@ -119,15 +131,14 @@ function drawNodes(){
 		c.arc(node.x,node.y,node.radius,0,2*Math.PI,true);
 		c.closePath();
 		c.fill();
-		c.fillStyle="black";
+		c.stroke();
+		c.fillStyle="white";
 		var delta=c.measureText(node.name).width/2;
 		c.fillText(node.name,node.x-delta,node.y+5);
 	}
 }
 function drawEdges(){
 	c.strokeStyle="gray";
-	c.lineWidth=3;
-	//for(var a=0;a<nodes.length;a++){
 	var node=nodes[0];
 	for(var b=0;b<node.connections.length;b++){
 		var node1=nodes[node.connections[b]];
@@ -137,7 +148,6 @@ function drawEdges(){
 		c.stroke();
 		c.closePath();
 	}
-	//}
 }
 function setEdges(){
 	for(var a=0;a<nodes.length;a++){
@@ -165,10 +175,13 @@ function populateNodes(){
 			a--;
 		}
 	}
-	var construct="nodes.splice(0,0,new Node(\""+data[0]+"\",530,70";
+	var construct="nodes.splice(0,0,new Node(\""+data[0]+"\",650,170";
+	var radians=(Math.PI*2)/(data.length-1);
+	var angle=0;
 	for(var a=1;a<data.length;a++){
 		construct+=",\""+data[a]+"\"";
-		nodes.push(new Node(data[a],530+(a*100),70,data[0]));
+		nodes.push(new Node(data[a],650+(100*Math.cos(angle)),170+(100*Math.sin(angle)),data[0]));
+		angle+=radians;
 	}
 	construct+="));";
 	eval(construct);
@@ -190,6 +203,7 @@ function drawGraph(x,y){
 
 //initialize
 function setCanvasDimensions(){
+	$("body")[0].style.overflow="hidden";
 	var rect=canvas.getBoundingClientRect();
 	canvas.width=window.innerWidth-(rect.left*2);
 	canvas.height=window.innerHeight-rect.top-rect.left;
@@ -207,21 +221,15 @@ function update(){
 	}
 	c.clearRect(0,0,canvas.width,canvas.height);
 	drawGraph(0,0);
+	c.lineWidth=Node.edge;
 	drawEdges();
-	drawNodes();
 	c.strokeStyle="black";
-	c.strokeRect(0,0,canvas.width,canvas.height);
+	c.lineWidth=1;
+	drawNodes();
+	//c.lineWidth=3;
+	//c.strokeRect(0,0,canvas.width,canvas.height);
 }
-c.font="10pt bold";
-$("body")[0].style.overflow="hidden";
-/*nodes.push(new Node("age",10,10,"wt.loss","meal.cal","sex"));
-nodes.push(new Node("wt.loss",30,10,"meal.cal","sex","age"));
-nodes.push(new Node("meal.cal",50,10,"sex","wt.loss","age"));
-nodes.push(new Node("sex",70,10,"meal.cal","wt.loss","age"));
-nodes.push(new Node("pat.karno",90,10,"ph.karno","ph.ecog","inst"));
-nodes.push(new Node("ph.karno",110,10,"ph.ecog","inst","pat.karno"));
-nodes.push(new Node("ph.ecog",130,10,"inst","ph.karno","pat.karno"));
-nodes.push(new Node("inst",150,10,"ph.ecog","ph.karno","pat.karno"));*/
+c.font="10pt serif bold";
 setCanvasDimensions();
 setEdges();
 update();
