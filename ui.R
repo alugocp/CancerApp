@@ -2,7 +2,7 @@ library(shiny)
 shinyUI(fluidPage(
 	theme="style.css",
 	onmouseup="selected=null",
-	tags$title("Alex Lugo's Kaplan-Meier Estimator"),
+	tags$title("Alex Lugo's Cancer App"),
 	fluidRow(
 		id="header",
 		column(4,
