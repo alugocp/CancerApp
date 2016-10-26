@@ -94,7 +94,7 @@ function distance(){
 
 //class definitions
 function Node(name,x,y){
-	Node.edge=5;
+	Node.edge=7;
 	this.radius=(c.measureText(name).width/2)+5;
 	this.x=x;
 	this.y=y;
@@ -133,11 +133,18 @@ function drawNodes(){
 		c.fill();
 		c.stroke();
 		c.fillStyle="white";
+		c.globalAlpha=0.25;
+		c.beginPath();
+		c.arc(node.x-(node.radius*Math.cos(Math.PI/4)/2),node.y-(node.radius*Math.sin(Math.PI/4)/2),node.radius/2,0,2*Math.PI,true);
+		c.closePath();
+		c.fill();
+		c.globalAlpha=1;
 		var delta=c.measureText(node.name).width/2;
 		c.fillText(node.name,node.x-delta,node.y+5);
 	}
 }
 function drawEdges(){
+	c.lineWidth=Node.edge;
 	c.strokeStyle="gray";
 	var node=nodes[0];
 	for(var b=0;b<node.connections.length;b++){
@@ -221,13 +228,10 @@ function update(){
 	}
 	c.clearRect(0,0,canvas.width,canvas.height);
 	drawGraph(0,0);
-	c.lineWidth=Node.edge;
 	drawEdges();
 	c.strokeStyle="black";
 	c.lineWidth=1;
 	drawNodes();
-	//c.lineWidth=3;
-	//c.strokeRect(0,0,canvas.width,canvas.height);
 }
 c.font="10pt serif bold";
 setCanvasDimensions();
