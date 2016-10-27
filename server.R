@@ -72,15 +72,22 @@ shinyServer(function(input,output){
 			c("age","wt.loss","meal.cal","sex"),
 			c("wt.loss","age","meal.cal","sex"),
 			c("meal.cal","age","wt.loss","sex"),
-			c("sex","age","wt.loss","meal.cal"),
-			c("pat.karno","ph.karno","ph.ecog","inst"),
-			c("ph.karno","pat.karno","ph.ecog","inst"),
-			c("ph.ecog","pat.karno","ph.karno","inst"),
-			c("inst","pat.karno","ph.karno","ph.ecog")
+			c("sex","age","wt.loss","meal.cal","inst","ph.karno","pat.karno","ph.ecog"),
+			c("pat.karno","ph.karno","ph.ecog","inst","sex"),
+			c("ph.karno","pat.karno","ph.ecog","inst","sex"),
+			c("ph.ecog","pat.karno","ph.karno","inst","sex"),
+			c("inst","pat.karno","ph.karno","ph.ecog","sex")
 		)
 		for(node in table){
 			if(node[1]==gene){
 				print(node)
+				for(i in 2:length(node)){
+					for(node1 in table){
+						if(node1[1]==node[i]){
+							print(node1)
+						}
+					}
+				}
 				break
 			}
 		}
