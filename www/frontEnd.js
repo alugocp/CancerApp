@@ -40,9 +40,16 @@ function clickCanvas(){
 			return;
 		}
 	}
-	for(var a=1;a<nodes.length;a++){
-		if(edgeClick(nodes[0],nodes[a])){
-			return;
+	for(var a=0;a<nodes.length;a++){
+		for(var b=0;b<a;b++){
+			if(edgeClick(nodes[a],nodes[b])){
+				return;
+			}
+		}
+		for(var b=a+1;b<nodes.length;b++){
+			if(edgeClick(nodes[a],nodes[b])){
+				return;
+			}
 		}
 	}
 }
@@ -95,7 +102,7 @@ function distance(){
 //class definitions
 function Node(name,x,y){
 	Node.edge=7;
-	this.radius=(c.measureText(name).width/2)+5;
+	this.radius=20;//(c.measureText(name).width/2)+5;//36
 	this.x=x;
 	this.y=y;
 	this.name=name;
@@ -123,7 +130,78 @@ function getColor(name){
 	}
 	return "#"+color;
 }
+function setEdges(){
+	for(var a=0;a<nodes.length;a++){
+		for(var b=0;b<nodes[a].connections.length;b++){
+			var found=false;
+			for(var c=0;c<nodes.length;c++){
+				if(nodes[c].name==nodes[a].connections[b]){
+					nodes[a].connections[b]=c;
+					if(b>0){
+						nodes[a].radius+=4;
+					}
+					found=true;
+				}
+			}
+			if(!found){
+				nodes[a].connections.splice(b,1);
+				b--;
+			}
+		}
+	}
+}
+function getCoordinates(index,length){
+	if(index==0){
+		return "650,170";
+	}
+	var angle=(index-1)*(Math.PI*2)/length;
+	return Math.round(650+(100*Math.cos(angle)))+","+Math.round(170+(100*Math.sin(angle)));
+}
+var nodeData="";
+var information;
+function populateNodes(){
+	c.font="10pt sans-serif";
+	while(nodes.length>0){
+		nodes.splice(0,1);
+	}
+	information=nodeData.split("[1]");
+	information.splice(0,1);
+	for(var i=0;i<information.length;i++){
+		var data=information[i].split(" ");
+		for(var a=0;a<data.length;a++){
+			if(data[a].substring(0,1)=="\""){
+				data[a]=data[a].substring(1,data[a].length-1);
+			}else{
+				data.splice(a,1);
+				a--;
+			}
+		}
+		var construct="nodes.push(new Node(\""+data[0]+"\","+getCoordinates(i,information.length-1);
+		for(var a=1;a<data.length;a++){
+			construct+=",\""+data[a]+"\"";
+		}
+		construct+="));";
+		eval(construct);
+	}
+	setEdges();
+}
+
+//graphs support
+var image=undefined;
+function drawGraph(x,y){
+	var img=new Image();
+	img.src=image.src;
+	var scale=0.75
+	c.translate(x,y);
+	c.scale(scale,scale);
+	c.drawImage(img,0,0);
+	c.scale(1/scale,1/scale);
+	c.translate(-x,-y);
+}
+
+//drawing
 function drawNodes(){
+	c.font="10pt sans-serif";
 	for(var a=0;a<nodes.length;a++){
 		var node=nodes[a];
 		c.fillStyle=node.color;
@@ -139,6 +217,7 @@ function drawNodes(){
 		c.closePath();
 		c.fill();
 		c.globalAlpha=1;
+		c.fillStyle="black";
 		var delta=c.measureText(node.name).width/2;
 		c.fillText(node.name,node.x-delta,node.y+5);
 	}
@@ -146,7 +225,7 @@ function drawNodes(){
 function drawEdges(){
 	c.lineWidth=Node.edge;
 	c.strokeStyle="gray";
-	var node=nodes[0];
+	/*var node=nodes[0];
 	for(var b=0;b<node.connections.length;b++){
 		var node1=nodes[node.connections[b]];
 		c.beginPath();
@@ -154,58 +233,44 @@ function drawEdges(){
 		c.lineTo(node1.x,node1.y);
 		c.stroke();
 		c.closePath();
-	}
-}
-function setEdges(){
+	}*/
 	for(var a=0;a<nodes.length;a++){
+		var node=nodes[a];
 		for(var b=0;b<nodes[a].connections.length;b++){
-			for(var c=0;c<nodes.length;c++){
-				if(nodes[c].name==nodes[a].connections[b]){
-					nodes[a].connections[b]=c;
-				}
-			}
+			var node1=nodes[nodes[a].connections[b]];
+			c.beginPath();
+			c.moveTo(node.x,node.y);
+			c.lineTo(node1.x,node1.y);
+			c.stroke();
+			c.closePath();
 		}
 	}
 }
-var nodeData="";
-function populateNodes(){
-	while(nodes.length>0){
-		nodes.splice(0,1);
+function drawHelpButton(){
+	var radius=15;
+	var hover=false;
+	if(mouse!=null && mouse[0]>=canvas.width-radius*2 && mouse[1]<=radius*2){
+		hover=true;
 	}
-	var data=nodeData.split(" ");
-	data.splice(0,1);
-	for(var a=0;a<data.length;a++){
-		if(data[a].substring(0,1)=="\""){
-			data[a]=data[a].substring(1,data[a].length-1);
-		}else{
-			data.splice(a,1);
-			a--;
-		}
+	if(hover){
+		c.fillStyle="white";
+	}else{
+		c.fillStyle="maroon";
 	}
-	var construct="nodes.splice(0,0,new Node(\""+data[0]+"\",650,170";
-	var radians=(Math.PI*2)/(data.length-1);
-	var angle=0;
-	for(var a=1;a<data.length;a++){
-		construct+=",\""+data[a]+"\"";
-		nodes.push(new Node(data[a],650+(100*Math.cos(angle)),170+(100*Math.sin(angle)),data[0]));
-		angle+=radians;
+	c.beginPath();
+	c.arc(canvas.width-radius,radius,radius,0,Math.PI*2,true);
+	c.closePath();
+	c.fill();
+	c.strokeStyle="black";
+	c.lineWidth=1;
+	c.stroke();
+	if(hover){
+		c.fillStyle="maroon";
+	}else{
+		c.fillStyle="white";
 	}
-	construct+="));";
-	eval(construct);
-	setEdges();
-}
-
-//graphs support
-var image=undefined;
-function drawGraph(x,y){
-	var img=new Image();
-	img.src=image.src;
-	var scale=0.75
-	c.translate(x,y);
-	c.scale(scale,scale);
-	c.drawImage(img,0,0);
-	c.scale(1/scale,1/scale);
-	c.translate(-x,-y);
+	c.font="bold 12pt sans-serif";
+	c.fillText("i",canvas.width-radius-3,radius+6);
 }
 
 //initialize
@@ -232,8 +297,8 @@ function update(){
 	c.strokeStyle="black";
 	c.lineWidth=1;
 	drawNodes();
+	drawHelpButton();
 }
-c.font="10pt serif bold";
 setCanvasDimensions();
 setEdges();
 update();
