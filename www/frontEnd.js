@@ -102,7 +102,7 @@ function distance(){
 //class definitions
 function Node(name,x,y){
 	Node.edge=7;
-	this.radius=20;//(c.measureText(name).width/2)+5;//36
+	this.radius=15;//(c.measureText(name).width/2)+5;//36
 	this.x=x;
 	this.y=y;
 	this.name=name;
@@ -117,7 +117,7 @@ function Node(name,x,y){
 
 //nodes support
 function getColor(name){
-	var chars=["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","."];
+	var chars=["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","0","1","2","3","4","5","6","7","8","9"];
 	var hex=["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"];
 	var color="";
 	var i=0;
@@ -138,7 +138,7 @@ function setEdges(){
 				if(nodes[c].name==nodes[a].connections[b]){
 					nodes[a].connections[b]=c;
 					if(b>0){
-						nodes[a].radius+=4;
+						nodes[a].radius+=5;
 					}
 					found=true;
 				}
@@ -158,38 +158,40 @@ function getCoordinates(index,length){
 	return Math.round(650+(100*Math.cos(angle)))+","+Math.round(170+(100*Math.sin(angle)));
 }
 var nodeData="";
-var information;
 function populateNodes(){
 	c.font="10pt sans-serif";
 	while(nodes.length>0){
 		nodes.splice(0,1);
 	}
-	information=nodeData.split("[1]");
+	var information=nodeData.split("[1]");
 	information.splice(0,1);
 	for(var i=0;i<information.length;i++){
-		var data=information[i].split(" ");
+		var data=information[i];
 		for(var a=0;a<data.length;a++){
-			if(data[a].substring(0,1)=="\""){
-				data[a]=data[a].substring(1,data[a].length-1);
-			}else{
-				data.splice(a,1);
+			if(data.substring(a,a+1)==" " || data.substring(a,a+1)=="\"" || data.substring(a,a+1)=="\n"){
+				data=data.substring(0,a)+data.substring(a+1);
 				a--;
 			}
 		}
+		data=data.split(",");
+		console.log(data);
 		var construct="nodes.push(new Node(\""+data[0]+"\","+getCoordinates(i,information.length-1);
 		for(var a=1;a<data.length;a++){
 			construct+=",\""+data[a]+"\"";
 		}
 		construct+="));";
+		console.log(construct);
 		eval(construct);
 	}
 	setEdges();
 }
 
-//graphs support
+//drawing
 var image=undefined;
 function drawGraph(x,y){
 	var img=new Image();
+	image.width=650;
+	image.height=400;
 	img.src=image.src;
 	var scale=0.75
 	c.translate(x,y);
@@ -198,8 +200,6 @@ function drawGraph(x,y){
 	c.scale(1/scale,1/scale);
 	c.translate(-x,-y);
 }
-
-//drawing
 function drawNodes(){
 	c.font="10pt sans-serif";
 	for(var a=0;a<nodes.length;a++){
@@ -225,15 +225,6 @@ function drawNodes(){
 function drawEdges(){
 	c.lineWidth=Node.edge;
 	c.strokeStyle="gray";
-	/*var node=nodes[0];
-	for(var b=0;b<node.connections.length;b++){
-		var node1=nodes[node.connections[b]];
-		c.beginPath();
-		c.moveTo(node.x,node.y);
-		c.lineTo(node1.x,node1.y);
-		c.stroke();
-		c.closePath();
-	}*/
 	for(var a=0;a<nodes.length;a++){
 		var node=nodes[a];
 		for(var b=0;b<nodes[a].connections.length;b++){
