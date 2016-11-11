@@ -1,94 +1,93 @@
 library(shiny)
 library(survival)
-#data <- read.table(pipe("ssh alugocp@ibissub01@umiacs.umd.edu '../../cbcb/project2-scratch/gi_visualization/validation.data.mRNA.RData'"),header=T)
 shinyServer(function(input,output){
+	load("validation.data.mRNA.RData")
+	clin <- clinical[,17:18]
+	data <- cbind2(data.matrix(clin),t(measurements))
 	output$km <- renderPlot({
-		tryCatch({
+		if(is.null(input$gene)){
+			graphData("")
+		}else{
 			if(input$gene1=="none"){
 				graphNode(input$quantile,input$gene)
 			}else{
 				graphEdge(input$quantile,input$gene,input$gene1)
 			}
-		},error=function(e){
-			graphData("")
-		})
+		}
 	})
 	graphNode <- function(k,gene){
-		data <- lung
-		cutoffs <- quantile(data[,gene],c(k,1-k),na.rm=TRUE)#na.rm=TRUE allows for N/A data. Remove later?
+		i <- match(gene,genes)
+		cutoffs <- quantile(data[,i+2],c(k,1-k),na.rm=TRUE)
 		graphData(gene)
 		
-		low <- subset(data,data[gene]<=cutoffs[1])
-		low$SurvObj <- with(low,Surv(time,status==2))
-		km <- survfit(SurvObj~1,data=low,conf.type="log-log")
+		low <- data.frame(subset(data,data[,i+2]<=cutoffs[1])[,1:2])
+		lowClin <- with(low,Surv(time,status==1))
+		km <- survfit(lowClin~1,data=low,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="red")
 		
-		high <- subset(data,data[gene]>=cutoffs[2])
-		high$SurvObj <- with(high,Surv(time,status==2))
-		km <- survfit(SurvObj~1,data=high,conf.type="log-log")
+		high <- data.frame(subset(data,data[,i+2]>=cutoffs[2])[,1:2])
+		highClin <- with(high,Surv(time,status==1))
+		km <- survfit(highClin~1,data=high,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="green")
 		
 		legend(850,1,c("low","high"),col=c("red","green"),lty=c(1,1))
 	}
 	graphEdge <- function(k,gene,gene1){
-		data <- lung
-		cutoffs <- c(quantile(data[,gene],c(k,1-k),na.rm=TRUE),quantile(data[,gene1],c(k,1-k),na.rm=TRUE))
+		i <- match(gene,genes)
+		i1 <- match(gene1,genes)
+		cutoffs <- c(quantile(data[,i+2],c(k,1-k),na.rm=TRUE),quantile(data[,i1+2],c(k,1-k),na.rm=TRUE))
 		graphData(c(gene," vs. ",gene1))
 		
-		lowlow <- subset(data,data[gene]<=cutoffs[1] & data[gene1]<=cutoffs[3])
-		lowlow$SurvObj <- with(lowlow,Surv(time,status==2))
-		km <- survfit(SurvObj~1,data=lowlow,conf.type="log-log")
+		lowlow <- data.frame(subset(data,data[,i+2]<=cutoffs[1] & data[,i1+2]<=cutoffs[3])[,1:2])
+		lowlowClin <- with(lowlow,Surv(time,status==1))
+		km <- survfit(lowlowClin~1,data=lowlow,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="red")
 		
-		lowhigh <- subset(data,data[gene]<=cutoffs[1] & data[gene1]>=cutoffs[4])
-		lowhigh$SurvObj <- with(lowhigh,Surv(time,status==2))
-		km <- survfit(SurvObj~1,data=lowhigh,conf.type="log-log")
+		lowhigh <- data.frame(subset(data,data[,i+2]<=cutoffs[1] & data[,i1+2]>=cutoffs[4])[,1:2])
+		lowhighClin <- with(lowhigh,Surv(time,status==1))
+		km <- survfit(lowhighClin~1,data=lowhigh,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="green")
 		
-		highhigh <- subset(data,data[gene]>=cutoffs[2] & data[gene1]>=cutoffs[4])
-		highhigh$SurvObj <- with(highhigh,Surv(time,status==2))
-		km <- survfit(SurvObj~1,data=highhigh,conf.type="log-log")
+		highhigh <- data.frame(subset(data,data[,i+2]>=cutoffs[2] & data[,i1+2]>=cutoffs[4])[,1:2])
+		highhighClin <- with(highhigh,Surv(time,status==1))
+		km <- survfit(highhighClin~1,data=highhigh,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="blue")
 		
-		highlow <- subset(data,data[gene]>=cutoffs[2] & data[gene1]<=cutoffs[3])
-		highlow$SurvObj <- with(highlow,Surv(time,status==2))
-		km <- survfit(SurvObj~1,data=highlow,conf.type="log-log")
+		highlow <- data.frame(subset(data,data[,i+2]>=cutoffs[2] & data[,i1+2]<=cutoffs[3]))
+		highlowClin <- with(highlow,Surv(time,status==1))
+		km <- survfit(highlowClin~1,data=highlow,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="orange")
 		
 		legend(850,1,c("low-low","low-high","high-high","high-low"),col=c("red","green","blue","orange"),lty=c(1,1))
 	}
 	graphData <- function(label){
-		data <- lung
-		data$SurvObj <- with(data,Surv(time,status==2))
-		km <- survfit(SurvObj~1,data=data,conf.type="log-log")
+		formula <- with(clin,Surv(time,status==1))
+		km <- survfit(formula~1,data=clin,conf.type="log-log")
 		plot(km,conf.int=F,mark.time=F,xlab="Time",ylab="Chance of Survival",main=label)
 	}
-	output$nodeData1 <- renderPrint({
-		"App"
-	})
 	output$nodeData <- renderPrint({
-		gene <- input$searched
-		table <- list(
-			c("age","wt.loss","meal.cal","sex"),
-			c("wt.loss","age","meal.cal","sex"),
-			c("meal.cal","age","wt.loss","sex"),
-			c("sex","age","wt.loss","meal.cal","inst","ph.karno","pat.karno","ph.ecog"),
-			c("pat.karno","ph.karno","ph.ecog","inst","sex"),
-			c("ph.karno","pat.karno","ph.ecog","inst","sex"),
-			c("ph.ecog","pat.karno","ph.karno","inst","sex"),
-			c("inst","pat.karno","ph.karno","ph.ecog","sex")
-		)
-		for(node in table){
-			if(node[1]==gene){
-				print(node)
-				for(i in 2:length(node)){
-					for(node1 in table){
-						if(node1[1]==node[i]){
-							print(node1)
-						}
+		load("GI.interactions.RData")
+		connections <- dataset$states
+		index <- match(input$searched,genes)
+		con <- subset(connections,connections[,1]==index)
+		x <- input$searched
+		if(length(con[,1])==0){
+			print(x)
+		}else{
+			for(i in length(con[,1])){
+				x <- paste(x,",",genes[con[i,2]])
+			}
+			print(x)
+			for(i in length(con[,1])){
+				index <- con[i,2]
+				con1 <- subset(connections,connections[,1]==index)
+				x <- genes[index]
+				if(length(con1[,1])>0){
+					for(a in length(con1[,1])){
+						x <- paste(x,",",genes[con1[a,2]])
 					}
 				}
-				break
+				print(x)
 			}
 		}
 	})

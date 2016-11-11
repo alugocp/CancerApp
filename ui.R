@@ -1,4 +1,5 @@
 library(shiny)
+load("validation.data.mRNA.RData")
 shinyUI(fluidPage(
 	theme="style.css",
 	onmouseup="selected=null",
@@ -11,7 +12,7 @@ shinyUI(fluidPage(
 			tags$a("by Alex Lugo",href="http://alugocp.github.io/resume",title="Click to access Alex's resume")
 		),
 		column(4,
-			selectizeInput("searched","Search genes...",c("age","sex","wt.loss","meal.cal","ph.ecog","ph.karno","pat.karno","inst"))
+			selectizeInput("searched","Search genes...",genes[0:100])
 		),
 		column(4,
 			numericInput("quantile","Pick a K value",0.3,step=0.05,min=0.1,max=0.5)
