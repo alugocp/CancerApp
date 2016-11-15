@@ -2,7 +2,8 @@ library(shiny)
 library(survival)
 shinyServer(function(input,output){
 	load("validation.data.mRNA.RData")
-	clin <- clinical[,17:18]
+	clin <- clinical[,17:18]#data.frame(cbind2(clinical[,"time"],clinical[,"status"]))
+	#colnames(clin) <- c("time","status")
 	data <- cbind2(data.matrix(clin),t(measurements))
 	output$km <- renderPlot({
 		if(is.null(input$gene)){

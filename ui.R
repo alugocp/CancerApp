@@ -12,7 +12,7 @@ shinyUI(fluidPage(
 			tags$a("by Alex Lugo",href="http://alugocp.github.io/resume",title="Click to access Alex's resume")
 		),
 		column(4,
-			selectizeInput("searched","Search genes...",genes[0:100])
+			selectizeInput("searched","Search genes...",subset(genes,genes[]!="?" & !is.na(measurements[,1]))[1:100])
 		),
 		column(4,
 			numericInput("quantile","Pick a K value",0.3,step=0.05,min=0.1,max=0.5)
