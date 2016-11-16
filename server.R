@@ -2,21 +2,21 @@ library(shiny)
 library(survival)
 shinyServer(function(input,output){
 	load("validation.data.mRNA.RData")
-	clin <- clinical[,17:18]#data.frame(cbind2(clinical[,"time"],clinical[,"status"]))
-	#colnames(clin) <- c("time","status")
+	clin <- clinical[,17:18]
 	data <- cbind2(data.matrix(clin),t(measurements))
 	output$km <- renderPlot({
 		if(is.null(input$gene)){
 			graphData("")
 		}else{
 			if(input$gene1=="none"){
-				graphNode(input$quantile,input$gene)
+				graphNode(input$gene)
 			}else{
-				graphEdge(input$quantile,input$gene,input$gene1)
+				graphEdge(input$gene,input$gene1)
 			}
 		}
 	})
-	graphNode <- function(k,gene){
+	graphNode <- function(gene){
+		k <- 0.33
 		i <- match(gene,genes)
 		cutoffs <- quantile(data[,i+2],c(k,1-k),na.rm=TRUE)
 		graphData(gene)
@@ -33,33 +33,43 @@ shinyServer(function(input,output){
 		
 		legend(850,1,c("low","high"),col=c("red","green"),lty=c(1,1))
 	}
-	graphEdge <- function(k,gene,gene1){
+	graphEdge <- function(gene,gene1){
 		i <- match(gene,genes)
 		i1 <- match(gene1,genes)
-		cutoffs <- c(quantile(data[,i+2],c(k,1-k),na.rm=TRUE),quantile(data[,i1+2],c(k,1-k),na.rm=TRUE))
-		graphData(c(gene," vs. ",gene1))
+		bins <- (bin.map[i,]*3)+bin.map[i1,]+1
+		graphData(paste(gene," vs. ",gene1))
 		
-		lowlow <- data.frame(subset(data,data[,i+2]<=cutoffs[1] & data[,i1+2]<=cutoffs[3])[,1:2])
-		lowlowClin <- with(lowlow,Surv(time,status==1))
-		km <- survfit(lowlowClin~1,data=lowlow,conf.type="log-log")
+		bin1 <- data.frame(subset(data,bins[]==1))
+		bin1clin <- with(bin1,Surv(time,status==1))
+		km <- survfit(bin1clin~1,data=bin1,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="red")
 		
-		lowhigh <- data.frame(subset(data,data[,i+2]<=cutoffs[1] & data[,i1+2]>=cutoffs[4])[,1:2])
-		lowhighClin <- with(lowhigh,Surv(time,status==1))
-		km <- survfit(lowhighClin~1,data=lowhigh,conf.type="log-log")
+		bin2 <- data.frame(subset(data,bins[]==2))
+		bin2clin <- with(bin2,Surv(time,status==1))
+		km <- survfit(bin2clin~1,data=bin2,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="green")
 		
-		highhigh <- data.frame(subset(data,data[,i+2]>=cutoffs[2] & data[,i1+2]>=cutoffs[4])[,1:2])
-		highhighClin <- with(highhigh,Surv(time,status==1))
-		km <- survfit(highhighClin~1,data=highhigh,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="blue")
-		
-		highlow <- data.frame(subset(data,data[,i+2]>=cutoffs[2] & data[,i1+2]<=cutoffs[3]))
-		highlowClin <- with(highlow,Surv(time,status==1))
-		km <- survfit(highlowClin~1,data=highlow,conf.type="log-log")
+		bin3 <- data.frame(subset(data,bins[]==3))
+		bin3clin <- with(bin3,Surv(time,status==1))
+		km <- survfit(bin3clin~1,data=bin3,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="orange")
 		
-		legend(850,1,c("low-low","low-high","high-high","high-low"),col=c("red","green","blue","orange"),lty=c(1,1))
+		bin5 <- data.frame(subset(data,bins[]==5))
+		bin5clin <- with(bin5,Surv(time,status==1))
+		km <- survfit(bin5clin~1,data=bin5,conf.type="log-log")
+		lines(km,conf.int=F,mark.time=F,col="blue")
+		
+		bin6 <- data.frame(subset(data,bins[]==6))
+		bin6clin <- with(bin6,Surv(time,status==1))
+		km <- survfit(bin6clin~1,data=bin6,conf.type="log-log")
+		lines(km,conf.int=F,mark.time=F,col="pink")
+		
+		bin9 <- data.frame(subset(data,bins[]==9))
+		bin9clin <- with(bin9,Surv(time,status==1))
+		km <- survfit(bin9clin~1,data=bin9,conf.type="log-log")
+		lines(km,conf.int=F,mark.time=F,col="yellow")
+		
+		legend(1,0.4,c("low","low-med","low-high","med","med-high","high"),col=c("red","green","orange","blue","pink","yellow"),lty=c(1,1))
 	}
 	graphData <- function(label){
 		formula <- with(clin,Surv(time,status==1))
@@ -69,24 +79,22 @@ shinyServer(function(input,output){
 	output$nodeData <- renderPrint({
 		load("GI.interactions.RData")
 		connections <- dataset$states
-		index <- match(input$searched,genes)
-		con <- subset(connections,connections[,1]==index)
 		x <- input$searched
+		index <- match(x,genes)
+		con <- subset(connections,connections[,"y"]==index)
 		if(length(con[,1])==0){
 			print(x)
 		}else{
-			for(i in length(con[,1])){
-				x <- paste(x,",",genes[con[i,2]])
+			for(i in 1:length(con[,1])){
+				x <- paste(x,",",genes[con[i,"x"]])
 			}
 			print(x)
-			for(i in length(con[,1])){
-				index <- con[i,2]
-				con1 <- subset(connections,connections[,1]==index)
+			for(i in 1:length(con[,1])){
+				index <- con[i,"x"]
+				con1 <- subset(connections,connections[,"y"]==index)
 				x <- genes[index]
-				if(length(con1[,1])>0){
-					for(a in length(con1[,1])){
-						x <- paste(x,",",genes[con1[a,2]])
-					}
+				for(a in length(con1[,1])){
+						x <- paste(x,",",genes[con1[a,"x"]])
 				}
 				print(x)
 			}
