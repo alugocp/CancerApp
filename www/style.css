@@ -27,6 +27,9 @@ div.row{
 	border-width:0px 0px 3px 0px;
 	border-color:black;
 }
+#shoutoutColumn{
+	text-align:center;
+}
 #logoColumn{
 	text-align:center;
 }
