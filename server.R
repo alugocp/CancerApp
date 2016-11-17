@@ -1,7 +1,7 @@
 library(shiny)
 library(survival)
 shinyServer(function(input,output){
-	load("validation.data.mRNA.RData")
+	#load("validation.data.mRNA.RData")
 	clin <- clinical[,17:18]
 	data <- cbind2(data.matrix(clin),t(measurements))
 	output$km <- renderPlot({
@@ -16,22 +16,26 @@ shinyServer(function(input,output){
 		}
 	})
 	graphNode <- function(gene){
-		k <- 0.33
 		i <- match(gene,genes)
-		cutoffs <- quantile(data[,i+2],c(k,1-k),na.rm=TRUE)
+		bins <- bin.map[i,]
 		graphData(gene)
 		
-		low <- data.frame(subset(data,data[,i+2]<=cutoffs[1])[,1:2])
+		low <- data.frame(subset(data,bins[]==0)[,1:2])
 		lowClin <- with(low,Surv(time,status==1))
 		km <- survfit(lowClin~1,data=low,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="red")
 		
-		high <- data.frame(subset(data,data[,i+2]>=cutoffs[2])[,1:2])
+		med <- data.frame(subset(data,bins[]==1)[,1:2])
+		medClin <- with(med,Surv(time,status==1))
+		km <- survfit(medClin~1,data=med,conf.type="log-log")
+		lines(km,conf.int=F,mark.time=F,col="blue")
+		
+		high <- data.frame(subset(data,bins[]==2)[,1:2])
 		highClin <- with(high,Surv(time,status==1))
 		km <- survfit(highClin~1,data=high,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="green")
 		
-		legend(850,1,c("low","high"),col=c("red","green"),lty=c(1,1))
+		legend(1,0.4,c("low","med","high"),col=c("red","blue","green"),lty=c(1,1))
 	}
 	graphEdge <- function(gene,gene1){
 		i <- match(gene,genes)
@@ -47,7 +51,7 @@ shinyServer(function(input,output){
 		bin2 <- data.frame(subset(data,bins[]==2))
 		bin2clin <- with(bin2,Surv(time,status==1))
 		km <- survfit(bin2clin~1,data=bin2,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="green")
+		lines(km,conf.int=F,mark.time=F,col="yellow")
 		
 		bin3 <- data.frame(subset(data,bins[]==3))
 		bin3clin <- with(bin3,Surv(time,status==1))
@@ -67,9 +71,9 @@ shinyServer(function(input,output){
 		bin9 <- data.frame(subset(data,bins[]==9))
 		bin9clin <- with(bin9,Surv(time,status==1))
 		km <- survfit(bin9clin~1,data=bin9,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="yellow")
+		lines(km,conf.int=F,mark.time=F,col="green")
 		
-		legend(1,0.4,c("low","low-med","low-high","med","med-high","high"),col=c("red","green","orange","blue","pink","yellow"),lty=c(1,1))
+		legend(1,0.4,c("low","low-med","low-high","med","med-high","high"),col=c("red","yellow","orange","blue","pink","green"),lty=c(1,1))
 	}
 	graphData <- function(label){
 		formula <- with(clin,Surv(time,status==1))

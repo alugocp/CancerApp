@@ -8,14 +8,15 @@ shinyUI(fluidPage(
 		id="header",
 		column(4,
 			id="logoColumn",
-			tags$h2("Cancer App",id="logo",title="Super G-Type 2 font by gomarice on 1001fonts.com"),
-			tags$a("by Alex Lugo",href="http://alugocp.github.io/resume",title="Click to access Alex's resume")
+			tags$h2("Cancer App",id="logo",title="Super G-Type 2 font by gomarice on 1001fonts.com")
 		),
 		column(4,
 			selectizeInput("searched","Search genes...",subset(genes,genes[]!="?" & !is.na(measurements[,1]))[1:100])
 		),
 		column(4,
-			numericInput("quantile","Pick a K value",0.3,step=0.05,min=0.1,max=0.5)
+			id="shoutoutColumn",
+			tags$br(),
+			tags$a("by Alex Lugo",href="http://alugocp.github.io/resume",title="Click to access Alex's resume",style="vertical-align:center")
 		)
 	),
 	fluidRow(
