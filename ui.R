@@ -11,7 +11,8 @@ shinyUI(fluidPage(
 			tags$h2("Cancer App",id="logo",title="Super G-Type 2 font by gomarice on 1001fonts.com")
 		),
 		column(4,
-			selectizeInput("searched","Search genes...",subset(genes,genes[]!="?" & !is.na(measurements[,1]))[1:100])
+			textInput("searched","Search Genes...",placeholder="ex. ABI1,A2M,ABCD1")
+			#selectizeInput("searched","Search genes...",subset(genes,genes[]!="?" & !is.na(measurements[,1]))[1:100])
 		),
 		column(4,
 			id="shoutoutColumn",

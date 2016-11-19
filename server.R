@@ -1,7 +1,6 @@
 library(shiny)
 library(survival)
 shinyServer(function(input,output){
-	#load("validation.data.mRNA.RData")
 	clin <- clinical[,17:18]
 	data <- cbind2(data.matrix(clin),t(measurements))
 	output$km <- renderPlot({
@@ -81,26 +80,48 @@ shinyServer(function(input,output){
 		plot(km,conf.int=F,mark.time=F,xlab="Time",ylab="Chance of Survival",main=label)
 	}
 	output$nodeData <- renderPrint({
-		load("GI.interactions.RData")
-		connections <- dataset$states
-		x <- input$searched
-		index <- match(x,genes)
-		con <- subset(connections,connections[,"y"]==index)
-		if(length(con[,1])==0){
-			print(x)
-		}else{
-			for(i in 1:length(con[,1])){
-				x <- paste(x,",",genes[con[i,"x"]])
-			}
-			print(x)
-			for(i in 1:length(con[,1])){
-				index <- con[i,"x"]
-				con1 <- subset(connections,connections[,"y"]==index)
-				x <- genes[index]
-				for(a in length(con1[,1])){
-						x <- paste(x,",",genes[con1[a,"x"]])
+		if(is.null(input$searched)){
+			print("")
+			return()
+		}
+		searched <- strsplit(input$searched,",")[[1]]
+		binColors <- c("red","yellow","orange","","blue","pink","","","green")
+		for(s in 1:length(searched)){
+			index <- match(searched[s],genes)
+			if(!is.na(index)){
+				con <- subset(dataset$states,dataset$states[,"y"]==index)
+				x <- paste(searched[s],"NULL","true",sep=",")
+				if(length(con[,1])==0){
+					print(x)
+				}else{
+					for(i in 1:length(con[,1])){
+						color <- binColors[con[i,"bin"]]
+						sign <- "+"
+						if(con[i,4]<0){
+							sign <- "-"
+						}
+						width <- abs(round(con[i,4],0))#*(factor/30)
+						x <- paste(x,genes[con[i,"x"]],color,width,sign,sep=",")
+					}
+					print(x)
+					for(i in 1:length(con[,1])){
+						index1 <- con[i,"x"]
+						con1 <- subset(dataset$states,dataset$states[,"y"]==index1)
+						x1 <- paste(genes[index1],"NULL","false",sep=",")
+						if(length(con1[,1])>0){
+							for(a in 1:length(con1[,1])){
+								color <- binColors[con1[a,"bin"]]
+								sign <- "+"
+								if(con1[a,4]<0){
+									sign <- "-"
+								}
+								width <- abs(round(con1[a,4],0))
+								x1 <- paste(x1,genes[con1[a,"x"]],color,width,sign,sep=",")
+							}
+						}
+						print(x1)
+					}
 				}
-				print(x)
 			}
 		}
 	})
