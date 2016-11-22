@@ -99,6 +99,7 @@ function Node(name,color){
 	this.color=getColor(name);
 	this.x=0;
 	this.y=0;
+	this.connections=0;
 }
 function Edge(color,width,sign,start,end){
 	this.color=color;
@@ -170,6 +171,9 @@ function populateNodes(){
 	}
 	for(var a=0;a<nodes.length;a++){
 		setCoordinates(nodes[a],a,nodes.length);
+		if(nodes[a].connections>0){
+			nodes[a].radius+=Math.round(10*Math.log(nodes[a].connections));
+		}
 	}
 }
 function establishConnection(gene1,gene2,color,width,sign){
@@ -194,8 +198,8 @@ function establishConnection(gene1,gene2,color,width,sign){
 	}
 	if(index1>=0 && index2>=0){
 		edges.push(new Edge(color,width,sign,index1,index2));
-		nodes[index1].radius+=5;
-		nodes[index2].radius+=5;
+		nodes[index1].connections++;
+		nodes[index2].connections++;
 	}
 }
 
@@ -250,6 +254,12 @@ function drawEdges(){
 		c.stroke();
 		c.closePath();
 		c.fillStyle="black";
+		var theta=Math.atan2(endY-startY,endX-startX);
+		startX+=nodes[edge.start].radius*Math.cos(theta);
+		startY+=nodes[edge.start].radius*Math.sin(theta);
+		theta+=Math.PI;
+		endX+=nodes[edge.end].radius*Math.cos(theta);
+		endY+=nodes[edge.end].radius*Math.sin(theta);
 		c.fillText(edge.sign,((endX-startX)/2)+startX,((endY-startY)/2)+startY);
 	}
 }
