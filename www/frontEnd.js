@@ -177,11 +177,6 @@ function populateNodes(){
 	}
 }
 function establishConnection(gene1,gene2,color,width,sign){
-	for(var a=0;a<edges.length;a++){
-		if((edges[a].start==gene1 && edges[a].end==gene2) || (edges[a].start==gene2 && edges[a].end==gene1)){
-			return;
-		}
-	}
 	var index1=-1;
 	var index2=-1;
 	for(var a=0;a<nodes.length;a++){
@@ -197,6 +192,11 @@ function establishConnection(gene1,gene2,color,width,sign){
 		}
 	}
 	if(index1>=0 && index2>=0){
+		for(var a=0;a<edges.length;a++){
+			if((edges[a].start==index1 && edges[a].end==index2) || (edges[a].start==index2 && edges[a].end==index1)){
+				return;
+			}
+		}
 		edges.push(new Edge(color,width,sign,index1,index2));
 		nodes[index1].connections++;
 		nodes[index2].connections++;
@@ -242,26 +242,41 @@ function drawNodes(){
 function drawEdges(){
 	for(var a=0;a<edges.length;a++){
 		var edge=edges[a];
-		c.strokeStyle=edge.color;
-		c.lineWidth=edge.width;
-		c.beginPath();
 		var startX=nodes[edge.start].x;
 		var startY=nodes[edge.start].y;
 		var endX=nodes[edge.end].x;
 		var endY=nodes[edge.end].y;
+		var theta=Math.atan2(endY-startY,endX-startX);
+		startX+=(nodes[edge.start].radius-edge.width)*Math.cos(theta);
+		startY+=(nodes[edge.start].radius-edge.width)*Math.sin(theta);
+		theta+=Math.PI;
+		endX+=nodes[edge.end].radius*Math.cos(theta);
+		endY+=nodes[edge.end].radius*Math.sin(theta);
+		c.strokeStyle=edge.color;
+		c.lineWidth=edge.width;
+		c.beginPath();
 		c.moveTo(startX,startY)
 		c.lineTo(endX,endY)
 		c.stroke();
 		c.closePath();
+		drawArrow(startX,startY,edge.width,edge.color,theta+Math.PI);
 		c.fillStyle="black";
-		var theta=Math.atan2(endY-startY,endX-startX);
-		startX+=nodes[edge.start].radius*Math.cos(theta);
-		startY+=nodes[edge.start].radius*Math.sin(theta);
-		theta+=Math.PI;
-		endX+=nodes[edge.end].radius*Math.cos(theta);
-		endY+=nodes[edge.end].radius*Math.sin(theta);
 		c.fillText(edge.sign,((endX-startX)/2)+startX,((endY-startY)/2)+startY);
 	}
+}
+function drawArrow(x,y,dimension,color,theta){
+	c.fillStyle=color;
+	c.translate(x,y);
+	c.rotate(theta);
+	c.beginPath();
+	c.moveTo(0,0);
+	c.lineTo(dimension,dimension);
+	c.lineTo(dimension,-dimension);
+	c.lineTo(0,0);
+	c.fill();
+	c.closePath();
+	c.rotate(-theta);
+	c.translate(-x,-y);
 }
 function drawHelpButton(){
 	var radius=15;
