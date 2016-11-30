@@ -247,8 +247,8 @@ function drawEdges(){
 		var endX=nodes[edge.end].x;
 		var endY=nodes[edge.end].y;
 		var theta=Math.atan2(endY-startY,endX-startX);
-		startX+=(nodes[edge.start].radius-edge.width)*Math.cos(theta);
-		startY+=(nodes[edge.start].radius-edge.width)*Math.sin(theta);
+		startX+=(nodes[edge.start].radius+parseInt(edge.width))*Math.cos(theta);
+		startY+=(nodes[edge.start].radius+parseInt(edge.width))*Math.sin(theta);
 		theta+=Math.PI;
 		endX+=nodes[edge.end].radius*Math.cos(theta);
 		endY+=nodes[edge.end].radius*Math.sin(theta);
@@ -264,15 +264,15 @@ function drawEdges(){
 		c.fillText(edge.sign,((endX-startX)/2)+startX,((endY-startY)/2)+startY);
 	}
 }
-function drawArrow(x,y,dimension,color,theta){
+function drawArrow(x,y,e,color,theta){
 	c.fillStyle=color;
 	c.translate(x,y);
 	c.rotate(theta);
 	c.beginPath();
-	c.moveTo(0,0);
-	c.lineTo(dimension,dimension);
-	c.lineTo(dimension,-dimension);
-	c.lineTo(0,0);
+	c.moveTo(-e,0);
+	c.lineTo(0,e);
+	c.lineTo(0,-e);
+	c.lineTo(-e,0);
 	c.fill();
 	c.closePath();
 	c.rotate(-theta);
