@@ -32,19 +32,37 @@ function mousemove(e){
 function clickCanvas(){
 	var x=mouse[0];
 	var y=mouse[1];
+        if(help.active){
+	        help.active=false;
+	        help.hover=false;
+	        return;
+	}
+        if(help.hover){
+	        drawHelpButton();
+	        help.active=true;
+	        help.hover=false;
+	        return;
+	}
 	for(var a=nodes.length-1;a>=0;a--){
 		var node=nodes[a];
 		if(distance(node,x,y)<=node.radius){
 			Shiny.onInputChange("gene",node.name);
 			Shiny.onInputChange("gene1","none");
+		        graph.x=x;
+		        graph.y=y;
+		        graph.visible=true;
 			return;
 		}
 	}
 	for(var a=edges.length-1;a>=0;a--){
 		if(edgeClick(nodes[edges[a].start],nodes[edges[a].end],edges[a].width)){
+		        graph.x=x;
+		        graph.y=y;
+		        graph.visible=true;
 			return;
 		}
 	}
+        graph.visible=false;
 }
 function edgeClick(node,node1,width){
 	var x=mouse[0];
@@ -108,6 +126,21 @@ function Edge(color,width,sign,start,end){
 	this.start=start;
 	this.end=end;
 }
+function Help(radius){
+        this.x=canvas.width-radius;
+        this.y=radius;
+        this.left=this.x-radius;
+        this.bottom=this.y+radius;
+        this.radius=radius;
+        this.hover=false;
+        this.active=false;
+}
+function Graph(){
+        this.image;
+        this.visible=false;
+        this.x=0;
+        this.y=0;
+}
 
 //nodes support
 function getColor(name){
@@ -148,7 +181,7 @@ function populateNodes(){
 	if(data.substring(0,6)=="[1]NA,"){
 		return;
 	}
-	
+
 	information=data.split("[1]");
 	information.splice(0,1);
 	for(var a=0;a<information.length;a++){
@@ -204,18 +237,15 @@ function establishConnection(gene1,gene2,color,width,sign){
 }
 
 //drawing
-var image=undefined;
-function drawGraph(x,y){
-	var img=new Image();
-	image.width=650;
-	image.height=400;
-	img.src=image.src;
-	var scale=0.75
-	c.translate(x,y);
-	c.scale(scale,scale);
-	c.drawImage(img,0,0);
-	c.scale(1/scale,1/scale);
-	c.translate(-x,-y);
+function drawGraph(){
+        if(graph.visible){
+            var scale=0.75
+	    c.translate(graph.x,graph.y);
+	    c.scale(scale,scale);
+   	    c.drawImage(graph.image,0,0);
+	    c.scale(1/scale,1/scale);
+	    c.translate(-graph.x,-graph.y);
+	}
 }
 function drawNodes(){
 	c.font="10pt sans-serif";
@@ -278,31 +308,50 @@ function drawArrow(x,y,e,color,theta){
 	c.rotate(-theta);
 	c.translate(-x,-y);
 }
+var help=new Help(15);
 function drawHelpButton(){
-	var radius=15;
-	var hover=false;
-	if(mouse!=null && mouse[0]>=canvas.width-radius*2 && mouse[1]<=radius*2){
-		hover=true;
+        if(canvas.width-(help.radius*2)>help.left){
+	        help.x=canvas.width-help.radius;
+	        help.left=help.x-help.radius;
 	}
-	if(hover){
+        help.hover=false;
+	if(mouse!=null && mouse[0]>=help.left && mouse[1]<=help.bottom){
+		help.hover=true;
+	}
+	if(help.hover){
 		c.fillStyle="white";
 	}else{
 		c.fillStyle="maroon";
 	}
 	c.beginPath();
-	c.arc(canvas.width-radius,radius,radius,0,Math.PI*2,true);
+	c.arc(help.x,help.y,help.radius,0,Math.PI*2,true);
 	c.closePath();
 	c.fill();
 	c.strokeStyle="black";
 	c.lineWidth=1;
 	c.stroke();
-	if(hover){
+	if(help.hover){
 		c.fillStyle="maroon";
 	}else{
 		c.fillStyle="white";
 	}
 	c.font="bold 12pt sans-serif";
-	c.fillText("i",canvas.width-radius-3,radius+6);
+	c.fillText("i",help.x-3,help.y+6);
+}
+function drawHelpScreen(){
+        c.fillText("Welcome to the help screen!",25,10);
+        c.fillText(" Type in a single gene's name, or a list of genes separated by commas to",5,30);
+        c.fillText("start exploring gene networks. Click on a gene node or a connection",5,50);
+        c.fillText("between genes to view a statistical representation of how it affects",5,70);
+        c.fillText("Cancer survival. All data will be graphed using Kaplan-Meier (KM) plots.",5,90);
+        c.fillText(" Connections can be different colors and widths, and they all have an",5,130);
+        c.fillText("arrow and either a + or - on them. Color indicates which gene expression",5,150);
+        c.fillText("combination (refer to graph legend) plays a critical role in Cancer. Width",5,170);
+        c.fillText("refers to our confidence in that role (how strongly we believe in it).",5,190);
+        c.fillText("The + and - indicate whether the factor positively or negatively affects",5,210);
+        c.fillText("Cancer survival. The arrow helps identify which gene is Gene 1. Gene 1 in",5,230);
+        c.fillText("an interaction corresponds to the first expression in each combination",5,250);
+        c.fillText("pair.",5,270);
 }
 
 //initialize
@@ -314,8 +363,8 @@ function setCanvasDimensions(){
 }
 function update(){
 	setTimeout(update,250);
-	if(image==undefined){
-		image=$("img")[0];
+	if(graph.image==undefined){
+		graph.image=$("img")[0];
 		return;
 	}
 	var data=document.getElementById("nodeData").innerHTML;
@@ -323,13 +372,28 @@ function update(){
 		nodeData=data;
 		populateNodes();
 	}
-	c.clearRect(0,0,canvas.width,canvas.height);
-	drawGraph(0,0);
-	drawEdges();
-	c.strokeStyle="black";
-	c.lineWidth=1;
-	drawNodes();
-	drawHelpButton();
+	if(help.active){
+	        var width=750;
+	        var x=(canvas.width-width)/2;
+	        c.clearRect(x,0,width,canvas.height);
+	        c.strokeStyle="black";
+	        c.strokeRect(x,0,width,canvas.height);
+	        c.fillStyle="maroon";
+	        c.font="15pt sans-serif";
+	        c.translate(x,15);
+	        drawHelpScreen();
+	        c.translate(-x,-15);
+	}else{
+		c.clearRect(0,0,canvas.width,canvas.height);
+	        drawEdges();
+         	c.strokeStyle="black";
+        	c.lineWidth=1;
+        	drawNodes();
+	        drawGraph();
+        	drawHelpButton();
+	}
 }
+
+var graph=new Graph();
 setCanvasDimensions();
 update();
