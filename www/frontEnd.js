@@ -21,17 +21,24 @@ function mousedown(e){
 		}
 	}
 }
+var moved=false;
 function mousemove(e){
 	formatClick(e);
 	if(selected!=null){
 		selected.x+=e.x-mouse[0];
 		selected.y+=e.y-mouse[1];
+	        moved=true;
 	}
 	mouse=[e.x,e.y];
 }
+var last;
 function clickCanvas(){
 	var x=mouse[0];
 	var y=mouse[1];
+        if(moved){
+	    moved=false;
+	    return;
+	}
         if(help.active){
 	        help.active=false;
 	        help.hover=false;
@@ -51,6 +58,10 @@ function clickCanvas(){
 		        graph.x=x;
 		        graph.y=y;
 		        graph.visible=true;
+		        if(last!=node){
+			    last=node;
+			    graph.image.src=Graph.defaultSrc;
+			}
 			return;
 		}
 	}
@@ -59,6 +70,10 @@ function clickCanvas(){
 		        graph.x=x;
 		        graph.y=y;
 		        graph.visible=true;
+		        if(last!=edges[a]){
+			    last=edges[a];
+			    graph.image.src=Graph.defaultSrc;
+			}
 			return;
 		}
 	}
@@ -140,6 +155,7 @@ function Graph(){
         this.visible=false;
         this.x=0;
         this.y=0;
+        Graph.defaultSrc;//="default";
 }
 
 //nodes support
@@ -239,13 +255,30 @@ function establishConnection(gene1,gene2,color,width,sign){
 //drawing
 function drawGraph(){
         if(graph.visible){
-            var scale=0.75
 	    c.translate(graph.x,graph.y);
-	    c.scale(scale,scale);
-   	    c.drawImage(graph.image,0,0);
-	    c.scale(1/scale,1/scale);
+	    if(graph.image.src==Graph.defaultSrc){
+		drawLoading();
+	    }else{
+		var scale=0.75;
+		c.scale(scale,scale);
+		var offsetX=0;
+		if(graph.x+(scale*graph.image.width)>canvas.width){
+		    offsetX=canvas.width-(graph.x+graph.image.width);
+		}
+		var offsetY=0;
+		if(graph.y+(scale*graph.image.height)>canvas.height){
+		    offsetY=canvas.height-(graph.y+graph.image.height);
+		}
+   		c.drawImage(graph.image,offsetX,offsetY);
+		c.scale(1/scale,1/scale);
+	    }
 	    c.translate(-graph.x,-graph.y);
 	}
+}
+function drawLoading(){
+    c.fillStyle="maroon";
+    c.font="bold 20pt sans-serif";
+    c.fillText("Loading...",0,0);
 }
 function drawNodes(){
 	c.font="10pt sans-serif";
@@ -353,6 +386,22 @@ function drawHelpScreen(){
         c.fillText("an interaction corresponds to the first expression in each combination",5,250);
         c.fillText("pair.",5,270);
 }
+function drawLegend(){
+    c.fillStyle="maroon";
+    c.font="15pt sans-serif";
+    var y=canvas.height-100;
+    if(mouse[1]<y){
+	c.globalAlpha=0.25;
+    }
+    c.translate(5,y);
+    c.fillText("Connection color shows what expression pair (see graph) causes an interesting interaction",0,0)
+    c.fillText("Arrows point to first gene in a pair",0,20)
+    c.fillText("Connection width is based on confidence in an interaction's effect",0,40)
+    c.fillText("+ or - signifies positive/negative effect",0,60)
+    c.fillText("Gene radius corresponds to how interconnected it is",0,80);
+    c.translate(-5,-y);
+    c.globalAlpha=1;
+}
 
 //initialize
 function setCanvasDimensions(){
@@ -365,6 +414,9 @@ function update(){
 	setTimeout(update,250);
 	if(graph.image==undefined){
 		graph.image=$("img")[0];
+	        if(graph.image!=undefined){
+	            Graph.defaultSrc=graph.image.src;
+		}
 		return;
 	}
 	var data=document.getElementById("nodeData").innerHTML;
@@ -386,6 +438,7 @@ function update(){
 	}else{
 		c.clearRect(0,0,canvas.width,canvas.height);
 	        drawEdges();
+	        drawLegend();
          	c.strokeStyle="black";
         	c.lineWidth=1;
         	drawNodes();
