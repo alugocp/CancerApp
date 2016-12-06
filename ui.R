@@ -6,15 +6,18 @@ shinyUI(fluidPage(
 	tags$title("Alex Lugo's Cancer App"),
 	fluidRow(
 		id="header",
-		column(4,
+		column(3,
 			id="logoColumn",
 			tags$h2("Cancer App",id="logo",title="Super G-Type 2 font by gomarice on 1001fonts.com")
 		),
-		column(4,
+		column(3,
 			textInput("searched","Search Genes...",placeholder="ex. ABI1,A2M,ABCD1")
-			#selectizeInput("searched","Search genes...",subset(genes,genes[]!="?" & !is.na(measurements[,1]))[1:100])
 		),
-		column(4,
+		column(3,
+			tags$br(),
+			tags$input(type="file",id="uploader",multiple="false",onchange="onUpload()")
+		),
+		column(3,
 			id="shoutoutColumn",
 			tags$br(),
 			tags$a("by Alex Lugo",href="http://alugocp.github.io/resume",title="Click to access Alex's resume",style="vertical-align:center")
