@@ -6,7 +6,7 @@ var c=canvas.getContext("2d");
 var nodes=Array();
 var edges=Array();
 var selected=null;
-var mouse=null;
+var mouse=[0,0];
 function formatClick(e){
 	var b=canvas.getBoundingClientRect();
 	e.x=e.clientX-b.left;
@@ -39,7 +39,7 @@ function clickCanvas(){
 	    moved=false;
 	    return;
 	}
-        if(help.active){
+        /*if(help.active){
 	        help.active=false;
 	        help.hover=false;
 	        return;
@@ -49,7 +49,7 @@ function clickCanvas(){
 	        help.active=true;
 	        help.hover=false;
 	        return;
-	}
+	}*/
 	for(var a=nodes.length-1;a>=0;a--){
 		var node=nodes[a];
 		if(distance(node,x,y)<=node.radius){
@@ -124,6 +124,23 @@ function distance(){
 		return dist(arguments[0].x,arguments[0].y,arguments[1].x,arguments[1].y);
 	}
 }
+function onUpload(){
+    var file=document.getElementById("uploader").files[0];
+    var reader=new FileReader();
+    reader.onload=function(e){
+	var contents=e.target.result;
+	contents=contents.split("\n");
+	var string=contents[0];
+	for(var a=1;a<contents.length;a++){
+	    if(contents[a].length>0){
+		string+=","+contents[a];
+	    }
+	}
+	document.getElementById("searched").value=string;
+	Shiny.onInputChange("searched",string);
+    }
+    reader.readAsText(file);
+}
 
 //class definitions
 function Node(name,color){
@@ -141,7 +158,7 @@ function Edge(color,width,sign,start,end){
 	this.start=start;
 	this.end=end;
 }
-function Help(radius){
+/*function Help(radius){
         this.x=canvas.width-radius;
         this.y=radius;
         this.left=this.x-radius;
@@ -149,7 +166,7 @@ function Help(radius){
         this.radius=radius;
         this.hover=false;
         this.active=false;
-}
+}*/
 function Graph(){
         this.image;
         this.visible=false;
@@ -259,18 +276,27 @@ function drawGraph(){
 	    if(graph.image.src==Graph.defaultSrc){
 		drawLoading();
 	    }else{
-		var scale=0.75;
-		c.scale(scale,scale);
+		var width=700;
+		var height=350;
 		var offsetX=0;
-		if(graph.x+(scale*graph.image.width)>canvas.width){
-		    offsetX=canvas.width-(graph.x+graph.image.width);
-		}
 		var offsetY=0;
-		if(graph.y+(scale*graph.image.height)>canvas.height){
-		    offsetY=canvas.height-(graph.y+graph.image.height);
+		if(graph.x+width>canvas.width){
+		    offsetX=canvas.width-(graph.x+width);
 		}
-   		c.drawImage(graph.image,offsetX,offsetY);
-		c.scale(1/scale,1/scale);
+		if(graph.y+height>canvas.height){
+		    offsetY=canvas.height-(graph.y+height);
+		}
+		c.fillStyle="black";
+		c.strokeStyle="black";
+		c.lineWidth=1;
+		c.font="bold 15pt sans-serif";
+		c.translate(offsetX,offsetY);
+		c.scale(width/graph.image.width,height/graph.image.height);
+		c.drawImage(graph.image,0,0);
+		c.strokeRect(0,0,graph.image.width,graph.image.height);
+		c.fillText("x",graph.image.width-25,25);
+		c.scale(graph.image.width/width,graph.image.height/height);
+		c.translate(-offsetX,-offsetY);
 	    }
 	    c.translate(-graph.x,-graph.y);
 	}
@@ -280,23 +306,29 @@ function drawLoading(){
     c.font="bold 20pt sans-serif";
     c.fillText("Loading...",0,0);
 }
+function drawCircle(x,y,radius,color){
+    c.strokeStyle="black";
+    c.lineWidth=1;
+    c.fillStyle=color;
+    c.beginPath();
+    c.arc(x,y,radius,0,2*Math.PI,true);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    c.fillStyle="white";
+    c.globalAlpha/=4;
+    c.beginPath();
+    var offset=radius*Math.cos(Math.PI/4)/2;
+    c.arc(x-offset,y-offset,radius/2,0,2*Math.PI,true);
+    c.closePath();
+    c.fill();
+    c.globalAlpha*=4;
+}
 function drawNodes(){
 	c.font="10pt sans-serif";
 	for(var a=0;a<nodes.length;a++){
 		var node=nodes[a];
-		c.fillStyle=node.color;
-		c.beginPath();
-		c.arc(node.x,node.y,node.radius,0,2*Math.PI,true);
-		c.closePath();
-		c.fill();
-		c.stroke();
-		c.fillStyle="white";
-		c.globalAlpha=0.25;
-		c.beginPath();
-		c.arc(node.x-(node.radius*Math.cos(Math.PI/4)/2),node.y-(node.radius*Math.sin(Math.PI/4)/2),node.radius/2,0,2*Math.PI,true);
-		c.closePath();
-		c.fill();
-		c.globalAlpha=1;
+		drawCircle(node.x,node.y,node.radius,node.color);
 		c.fillStyle="black";
 		var delta=c.measureText(node.name).width/2;
 		c.fillText(node.name,node.x-delta,node.y+5);
@@ -315,17 +347,26 @@ function drawEdges(){
 		theta+=Math.PI;
 		endX+=nodes[edge.end].radius*Math.cos(theta);
 		endY+=nodes[edge.end].radius*Math.sin(theta);
-		c.strokeStyle=edge.color;
-		c.lineWidth=edge.width;
-		c.beginPath();
-		c.moveTo(startX,startY)
-		c.lineTo(endX,endY)
-		c.stroke();
-		c.closePath();
-		drawArrow(startX,startY,edge.width,edge.color,theta+Math.PI);
-		c.fillStyle="black";
-		c.fillText(edge.sign,((endX-startX)/2)+startX,((endY-startY)/2)+startY);
+		drawEdge(startX,startY,endX,endY,edge.color,edge.width,edge.sign);
 	}
+}
+function drawEdge(startX,startY,endX,endY,color,width,sign){
+    c.strokeStyle=color;
+    c.lineWidth=width;
+    c.beginPath();
+    c.moveTo(startX,startY)
+    c.lineTo(endX,endY)
+    c.stroke();
+    c.closePath();
+    if(arguments.length==8){
+	var theta=arguments[7];
+    }else{
+	var theta=Math.atan2(endY-startY,endX-startX)+Math.PI;
+    }
+    drawArrow(startX,startY,width,color,theta+Math.PI);
+    c.fillStyle="black";
+    c.font="bold 15pt sans-serif";
+    c.fillText(sign,((endX-startX)/2)+startX,((endY-startY)/2)+startY);
 }
 function drawArrow(x,y,e,color,theta){
 	c.fillStyle=color;
@@ -341,7 +382,7 @@ function drawArrow(x,y,e,color,theta){
 	c.rotate(-theta);
 	c.translate(-x,-y);
 }
-var help=new Help(15);
+/*var help=new Help(15);
 function drawHelpButton(){
         if(canvas.width-(help.radius*2)>help.left){
 	        help.x=canvas.width-help.radius;
@@ -386,7 +427,7 @@ function drawHelpScreen(){
         c.fillText("an interaction corresponds to the first expression in each combination",5,250);
         c.fillText("pair.",5,270);
 }
-function drawLegend(){
+function drawLegend1(){
     c.fillStyle="maroon";
     c.font="15pt sans-serif";
     var y=canvas.height-100;
@@ -399,6 +440,24 @@ function drawLegend(){
     c.fillText("Connection width is based on confidence in an interaction's effect",0,40)
     c.fillText("+ or - signifies positive/negative effect",0,60)
     c.fillText("Gene radius corresponds to how interconnected it is",0,80);
+    c.translate(-5,-y);
+    c.globalAlpha=1;
+}*/
+function drawLegend(){
+    var y=canvas.height-100;
+    if(mouse[1]<y-20){
+	c.globalAlpha=0.25;
+    }
+    c.translate(5,y);
+    drawCircle(20,0,20,"red");
+    drawCircle(20,35,10,"blue");
+    drawEdge(95,60,5,60,"red",15,"+");
+    drawEdge(100,85,5,85,"green",5,"-");
+    c.fillStyle="gray";
+    c.fillText("Very interconnected gene",50,7);
+    c.fillText("Less interconnected gene",40,40);
+    c.fillText("Confident, positive interaction when both genes are lowly expressed",115,70);
+    c.fillText("Less confident, negative interaction when both genes are highly expressed",115,95);
     c.translate(-5,-y);
     c.globalAlpha=1;
 }
@@ -417,14 +476,14 @@ function update(){
 	        if(graph.image!=undefined){
 	            Graph.defaultSrc=graph.image.src;
 		}
-		return;
+		//return;
 	}
 	var data=document.getElementById("nodeData").innerHTML;
 	if(nodeData!=data){
 		nodeData=data;
 		populateNodes();
 	}
-	if(help.active){
+	/*if(help.active){
 	        var width=750;
 	        var x=(canvas.width-width)/2;
 	        c.clearRect(x,0,width,canvas.height);
@@ -435,16 +494,14 @@ function update(){
 	        c.translate(x,15);
 	        drawHelpScreen();
 	        c.translate(-x,-15);
-	}else{
+	}else{*/
 		c.clearRect(0,0,canvas.width,canvas.height);
 	        drawEdges();
 	        drawLegend();
-         	c.strokeStyle="black";
-        	c.lineWidth=1;
         	drawNodes();
 	        drawGraph();
-        	drawHelpButton();
-	}
+        	/*drawHelpButton();
+	}*/
 }
 
 var graph=new Graph();
