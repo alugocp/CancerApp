@@ -1,8 +1,4 @@
-library(shiny)
-library(survival)
 shinyServer(function(input,output){
-	clin <- clinical[,17:18]
-	data <- cbind2(data.matrix(clin),t(measurements))
 	output$km <- renderPlot({
 		if(is.null(input$gene)){
 			graphData("")
@@ -91,9 +87,7 @@ shinyServer(function(input,output){
 		legend(1,0.6,c("low-low","low-med","low-high","med-low","med-med","med-high","high-low","high-med","high-high"),col=c("red","yellow","orange","purple","blue","pink","gray","cyan","green"),lty=c(1,1))
 	}
 	graphData <- function(label){
-		formula <- with(clin,Surv(time,status==1))
-		km <- survfit(formula~1,data=clin,conf.type="log-log")
-		plot(km,conf.int=F,mark.time=F,xlab="Time",ylab="Chance of Survival",main=label)
+		plot(fullKm,conf.int=F,mark.time=F,xlab="Time",ylab="Chance of Survival",main=label)
 	}
 	flip <- function(bin){
 		if(bin==2){
@@ -115,7 +109,7 @@ shinyServer(function(input,output){
 		for(s in 1:length(searched)){
 			index <- match(searched[s],genes)
 			if(!is.na(index)){
-				con <- subset(dataset$states,dataset$states[,"y"]==index | dataset$states[,"x"]==index)
+				con <- subset(interactions,interactions[,"y"]==index | interactions[,"x"]==index)
 				x <- paste(searched[s],"NULL","true",sep=",")
 				if(length(con[,1])==0){
 					print(x)
@@ -142,7 +136,7 @@ shinyServer(function(input,output){
 						}else{
 							index1 <- con[i,"y"]
 						}
-						con1 <- subset(dataset$states,dataset$states[,"y"]==index1 | dataset$states[,"x"]==index1)
+						con1 <- subset(interactions,interactions[,"y"]==index1 | interactions[,"x"]==index1)
 						x1 <- paste(genes[index1],"NULL","false",sep=",")
 						if(length(con1[,1])>0){
 							for(a in 1:length(con1[,1])){
