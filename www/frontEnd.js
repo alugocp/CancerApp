@@ -14,6 +14,10 @@ function formatClick(e){
 }
 function mousedown(e){
 	formatClick(e);
+        if(graph.visible && graph.mouseIn(e.x,e.y)){
+	    selected=graph;
+	    return;
+	}
 	for(var a=nodes.length-1;a>=0;a--){
 		if(distance(nodes[a],e.x,e.y)<nodes[a].radius){
 			selected=nodes[a];
@@ -37,6 +41,7 @@ function clickCanvas(){
 	var y=mouse[1];
         if(moved){
 	    moved=false;
+	    selected=null;
 	    return;
 	}
         /*if(help.active){
@@ -50,14 +55,16 @@ function clickCanvas(){
 	        help.hover=false;
 	        return;
 	}*/
+        if(graph.visible && graph.mouseIn(mouse[0],mouse[1])){
+	    graph.visible=false;
+	    return;
+	}
 	for(var a=nodes.length-1;a>=0;a--){
 		var node=nodes[a];
 		if(distance(node,x,y)<=node.radius){
 			Shiny.onInputChange("gene",node.name);
 			Shiny.onInputChange("gene1","none");
-		        graph.x=x;
-		        graph.y=y;
-		        graph.visible=true;
+		        graph.setCoordinates(node.x,node.y,node.radius+2);
 		        if(last!=node){
 			    last=node;
 			    graph.image.src=Graph.defaultSrc;
@@ -66,12 +73,11 @@ function clickCanvas(){
 		}
 	}
 	for(var a=edges.length-1;a>=0;a--){
-		if(edgeClick(nodes[edges[a].start],nodes[edges[a].end],edges[a].width)){
-		        graph.x=x;
-		        graph.y=y;
-		        graph.visible=true;
-		        if(last!=edges[a]){
-			    last=edges[a];
+	        var edge=edges[a];
+		if(edgeClick(nodes[edge.start],nodes[edge.end],edge.width)){
+		        graph.setCoordinates(edge.signPos[0],edge.signPos[1],15);
+		        if(last!=edge){
+			    last=edge;
 			    graph.image.src=Graph.defaultSrc;
 			}
 			return;
@@ -157,6 +163,7 @@ function Edge(color,width,sign,start,end){
 	this.sign=sign;
 	this.start=start;
 	this.end=end;
+        this.signPos=[];
 }
 /*function Help(radius){
         this.x=canvas.width-radius;
@@ -168,11 +175,29 @@ function Edge(color,width,sign,start,end){
         this.active=false;
 }*/
 function Graph(){
-        this.image;
-        this.visible=false;
-        this.x=0;
-        this.y=0;
-        Graph.defaultSrc;//="default";
+    this.image;
+    this.visible=false;
+    this.x=0;
+    this.y=0;
+    this.width=700;
+    this.height=350;
+    Graph.defaultSrc;//="default";
+    this.setCoordinates=function(focusX,focusY,minOffset){
+	this.x=focusX+minOffset;
+	this.y=focusY-(this.height/2);
+	if(this.x+this.width>canvas.width){
+	    this.x=focusX-minOffset-this.width;
+	}
+	if(this.y<0){
+	    this.y=focusY+minOffset;
+	}else if(this.y+this.height>canvas.height){
+	    this.y=focusY-minOffset-this.height;
+	}
+	this.visible=true;
+    }
+    this.mouseIn=function(x,y){
+	return (x>=this.x && x<=this.x+this.width && y>=this.y && y<=this.y+this.height);
+    }
 }
 
 //nodes support
@@ -190,10 +215,11 @@ function getColor(name){
 	}
 	return "#"+color;
 }
-function setCoordinates(node,index,length){
+function setCoordinates(node,index,length,center){
 	var angle=index*(Math.PI*2)/length;
-	node.x=Math.round(650+(100*Math.cos(angle)));
-	node.y=Math.round(170+(100*Math.sin(angle)));
+        var distance=150;
+	node.x=Math.round(center.x+(distance*Math.cos(angle)));
+	node.y=Math.round(center.y+(distance*Math.sin(angle)));
 }
 var nodeData="";
 function populateNodes(){
@@ -215,6 +241,7 @@ function populateNodes(){
 		return;
 	}
 
+        var selected=document.getElementById("searched").value.split(",");
 	information=data.split("[1]");
 	information.splice(0,1);
 	for(var a=0;a<information.length;a++){
@@ -235,8 +262,30 @@ function populateNodes(){
 			establishConnection(information[a][0],information[a][b],information[a][b+1],information[a][b+2],information[a][b+3]);
 		}
 	}
+        var centerX=200;
+        var centerY=200;
+        var centerNode,index,length;
 	for(var a=0;a<nodes.length;a++){
-		setCoordinates(nodes[a],a,nodes.length);
+	        console.log(selected.indexOf(nodes[a].name));
+	        if(selected.indexOf(nodes[a].name)>=0){
+		    centerNode=nodes[a];
+		    index=0;
+		    length=1;
+		    while(a+length<nodes.length && selected.indexOf(nodes[a+length].name)==-1){
+			length++;
+		    }
+		    length--;
+		    nodes[a].x=centerX;
+		    nodes[a].y=centerY;
+		    centerX+=350;
+		    if(centerX+175>canvas.width){
+			centerX=200;
+			centerY+=350;
+		    }
+		}else{
+	            setCoordinates(nodes[a],index,length,centerNode);
+		    index++;
+		}
 		if(nodes[a].connections>0){
 			nodes[a].radius+=Math.round(10*Math.log(nodes[a].connections));
 		}
@@ -276,27 +325,15 @@ function drawGraph(){
 	    if(graph.image.src==Graph.defaultSrc){
 		drawLoading();
 	    }else{
-		var width=700;
-		var height=350;
-		var offsetX=0;
-		var offsetY=0;
-		if(graph.x+width>canvas.width){
-		    offsetX=canvas.width-(graph.x+width);
-		}
-		if(graph.y+height>canvas.height){
-		    offsetY=canvas.height-(graph.y+height);
-		}
 		c.fillStyle="black";
 		c.strokeStyle="black";
 		c.lineWidth=1;
 		c.font="bold 15pt sans-serif";
-		c.translate(offsetX,offsetY);
-		c.scale(width/graph.image.width,height/graph.image.height);
+		c.scale(graph.width/graph.image.width,graph.height/graph.image.height);
 		c.drawImage(graph.image,0,0);
 		c.strokeRect(0,0,graph.image.width,graph.image.height);
 		c.fillText("x",graph.image.width-25,25);
-		c.scale(graph.image.width/width,graph.image.height/height);
-		c.translate(-offsetX,-offsetY);
+		c.scale(graph.image.width/graph.width,graph.image.height/graph.height);
 	    }
 	    c.translate(-graph.x,-graph.y);
 	}
@@ -347,7 +384,7 @@ function drawEdges(){
 		theta+=Math.PI;
 		endX+=nodes[edge.end].radius*Math.cos(theta);
 		endY+=nodes[edge.end].radius*Math.sin(theta);
-		drawEdge(startX,startY,endX,endY,edge.color,edge.width,edge.sign);
+		edge.signPos=drawEdge(startX,startY,endX,endY,edge.color,edge.width,edge.sign);
 	}
 }
 function drawEdge(startX,startY,endX,endY,color,width,sign){
@@ -366,7 +403,9 @@ function drawEdge(startX,startY,endX,endY,color,width,sign){
     drawArrow(startX,startY,width,color,theta+Math.PI);
     c.fillStyle="black";
     c.font="bold 15pt sans-serif";
-    c.fillText(sign,((endX-startX)/2)+startX,((endY-startY)/2)+startY);
+    var signPos=[((endX-startX)/2)+startX,((endY-startY)/2)+startY]
+    c.fillText(sign,signPos[0]-7,signPos[1]+7);
+    return signPos;
 }
 function drawArrow(x,y,e,color,theta){
 	c.fillStyle=color;
