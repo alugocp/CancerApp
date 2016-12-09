@@ -7,10 +7,13 @@ var nodes=Array();
 var edges=Array();
 var selected=null;
 var mouse=[0,0];
+var origin={x:0,y:0};
 function formatClick(e){
 	var b=canvas.getBoundingClientRect();
 	e.x=e.clientX-b.left;
 	e.y=e.clientY-b.top;
+        e.x-=origin.x;
+        e.y-=origin.y;
 }
 function mousedown(e){
 	formatClick(e);
@@ -24,6 +27,7 @@ function mousedown(e){
 			return;
 		}
 	}
+        selected=origin;
 }
 var moved=false;
 function mousemove(e){
@@ -149,13 +153,14 @@ function onUpload(){
 }
 
 //class definitions
-function Node(name,color){
+function Node(name,color,selected){
 	this.radius=15;
 	this.name=name;
 	this.color=getColor(name);
 	this.x=0;
 	this.y=0;
 	this.connections=0;
+        this.selected=JSON.parse(selected);
 }
 function Edge(color,width,sign,start,end){
 	this.color=color;
@@ -185,12 +190,12 @@ function Graph(){
     this.setCoordinates=function(focusX,focusY,minOffset){
 	this.x=focusX+minOffset;
 	this.y=focusY-(this.height/2);
-	if(this.x+this.width>canvas.width){
+	if(this.x+this.width+origin.x>canvas.width){
 	    this.x=focusX-minOffset-this.width;
 	}
-	if(this.y<0){
+	if(this.y+origin.y<0){
 	    this.y=focusY+minOffset;
-	}else if(this.y+this.height>canvas.height){
+	}else if(this.y+this.height+origin.y>canvas.height){
 	    this.y=focusY-minOffset-this.height;
 	}
 	this.visible=true;
@@ -241,7 +246,6 @@ function populateNodes(){
 		return;
 	}
 
-        var selected=document.getElementById("searched").value.split(",");
 	information=data.split("[1]");
 	information.splice(0,1);
 	for(var a=0;a<information.length;a++){
@@ -250,11 +254,17 @@ function populateNodes(){
 		for(var b=0;b<nodes.length;b++){
 			if(nodes[b].name==information[a][0]){
 				add=false;
+			        if(JSON.parse(information[a][2]) && !nodes[b].selected){
+				    var n=nodes[b];
+				    n.selected=true;
+				    nodes.splice(b,1);
+				    nodes.push(n);
+				}
 				break;
 			}
 		}
 		if(add==true){
-			nodes.push(new Node(information[a][0],information[a][1]));
+			nodes.push(new Node(information[a][0],information[a][1],information[a][2]));
 		}
 	}
 	for(var a=0;a<information.length;a++){
@@ -262,7 +272,7 @@ function populateNodes(){
 			establishConnection(information[a][0],information[a][b],information[a][b+1],information[a][b+2],information[a][b+3]);
 		}
 	}
-        var centerX=200;
+        /*var centerX=200;
         var centerY=200;
         var centerNode,index,length;
 	for(var a=0;a<nodes.length;a++){
@@ -289,7 +299,37 @@ function populateNodes(){
 		if(nodes[a].connections>0){
 			nodes[a].radius+=Math.round(10*Math.log(nodes[a].connections));
 		}
+	}*/
+        positionNodes();
+}
+function positionNodes(){
+    var centerX=0;
+    var centerY=0;
+    for(var a=0;a<nodes.length;a++){
+	if(nodes[a].selected){
+	    var length=0;
+	    while(a+1+length<nodes.length && !nodes[a+1+length].selected){
+		length++;
+	    }
+	    var rad=Math.ceil((length*20)/Math.PI)+10;
+	    if(rad<150){
+		rad=150;
+	    }
+	    centerX+=rad+25;
+	    nodes[a].x=centerX;
+	    nodes[a].y=centerY;
+	    console.log(length);
+	    for(var b=0;b<length;b++){
+		var theta=Math.PI*2*b/length
+		nodes[b+a+1].x=(Math.cos(theta)*rad)+centerX;
+		nodes[b+a+1].y=(Math.sin(theta)*rad)+centerY;
+	    }
+	    centerX+=rad+25;
 	}
+	if(nodes[a].connections>0){
+	    nodes[a].radius+=Math.round(10*Math.log(nodes[a].connections));
+	}
+    }
 }
 function establishConnection(gene1,gene2,color,width,sign){
 	var index1=-1;
@@ -484,7 +524,7 @@ function drawLegend1(){
 }*/
 function drawLegend(){
     var y=canvas.height-100;
-    if(mouse[1]<y-20){
+    if(mouse[1]+origin.y<y-20){
 	c.globalAlpha=0.25;
     }
     c.translate(5,y);
@@ -534,11 +574,13 @@ function update(){
 	        drawHelpScreen();
 	        c.translate(-x,-15);
 	}else{*/
-		c.clearRect(0,0,canvas.width,canvas.height);
-	        drawEdges();
-	        drawLegend();
-        	drawNodes();
-	        drawGraph();
+        c.clearRect(0,0,canvas.width,canvas.height);
+        drawLegend();
+        c.translate(origin.x,origin.y);
+        drawEdges();
+        drawNodes();
+        drawGraph();
+        c.translate(-origin.x,-origin.y);
         	/*drawHelpButton();
 	}*/
 }
