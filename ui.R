@@ -3,6 +3,7 @@ load("validation.data.mRNA.RData")
 shinyUI(fluidPage(
 	theme="style.css",
 	onmouseup="selected=null",
+	onresize="setCanvasDimensions()",
 	tags$title("Alex Lugo's Cancer App"),
 	fluidRow(
 		id="header",
@@ -25,7 +26,7 @@ shinyUI(fluidPage(
 	),
 	fluidRow(
 		mainPanel(
-			tags$canvas(id="canvas",width=200,height=200,onclick="clickCanvas()",onmousedown="mousedown(event)",onmousemove="mousemove(event)"),
+			tags$canvas(id="canvas",width=200,height=200,onclick="clickCanvas()",onmousedown="mousedown(event)",onmousemove="mousemove(event)",onmouseleave="selected=null"),
 			tags$br(),
 			tags$br(),
 			tags$br(),

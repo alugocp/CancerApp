@@ -15,21 +15,22 @@ shinyServer(function(input,output){
 		bins <- bin.map[i,]
 		graphData(gene)
 		
-		low <- data.frame(subset(data,bins[]==0)[,1:2])
-		lowClin <- with(low,Surv(time,status==1))
-		km <- survfit(lowClin~1,data=low,conf.type="log-log")
+		d <- data.frame(subset(data,bins[]==0)[,1:2])
+		clin <- with(d,Surv(time,status==1))
+		km <- survfit(clin~1,data=d,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="red")
 		
-		med <- data.frame(subset(data,bins[]==1)[,1:2])
-		medClin <- with(med,Surv(time,status==1))
-		km <- survfit(medClin~1,data=med,conf.type="log-log")
+		d <- data.frame(subset(data,bins[]==1)[,1:2])
+		clin <- with(d,Surv(time,status==1))
+		km <- survfit(clin~1,data=d,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="blue")
 		
-		high <- data.frame(subset(data,bins[]==2)[,1:2])
-		highClin <- with(high,Surv(time,status==1))
-		km <- survfit(highClin~1,data=high,conf.type="log-log")
+		d <- data.frame(subset(data,bins[]==2)[,1:2])
+		clin <- with(d,Surv(time,status==1))
+		km <- survfit(clin~1,data=d,conf.type="log-log")
 		lines(km,conf.int=F,mark.time=F,col="green")
 		
+		rm(d,clin,km)
 		legend(1,0.4,c("low","med","high"),col=c("red","blue","green"),lty=c(1,1))
 	}
 	graphEdge <- function(gene,gene1){
