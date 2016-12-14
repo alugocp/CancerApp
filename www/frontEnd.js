@@ -153,10 +153,10 @@ function onUpload(){
 }
 
 //class definitions
-function Node(name,color,selected){
+function Node(name,role,selected){
 	this.radius=15;
 	this.name=name;
-	this.color=getColor(name);
+	this.color=getColor(role);
 	this.x=0;
 	this.y=0;
 	this.connections=0;
@@ -206,7 +206,7 @@ function Graph(){
 }
 
 //nodes support
-function getColor(name){
+/*function getColor(name){
 	var chars=["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","0","1","2","3","4","5","6","7","8","9"];
 	var hex=["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"];
 	var color="";
@@ -219,6 +219,24 @@ function getColor(name){
 		i++;
 	}
 	return "#"+color;
+}*/
+function getColor(role){
+    if(role.substring(0,3)=="TSG"){
+	return "green";
+    }
+    if(role.substring(0,4)=="none"){
+	return "gray";
+    }
+    if(role.substring(0,8)=="oncogene"){
+	return "orange";
+    }
+    if(role.substring(0,10)=="BRCAdriver"){
+	return "blue";
+    }
+    if(role.substring(0,10)=="Cancergene"){
+	return "red";
+    }
+    return "gray";
 }
 function setCoordinates(node,index,length,center){
 	var angle=index*(Math.PI*2)/length;
@@ -318,7 +336,6 @@ function positionNodes(){
 	    centerX+=rad+25;
 	    nodes[a].x=centerX;
 	    nodes[a].y=centerY;
-	    console.log(length);
 	    for(var b=0;b<length;b++){
 		var theta=Math.PI*2*b/length
 		nodes[b+a+1].x=(Math.cos(theta)*rad)+centerX;
