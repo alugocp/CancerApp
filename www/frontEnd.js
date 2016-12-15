@@ -156,11 +156,18 @@ function onUpload(){
 function Node(name,role,selected){
 	this.radius=15;
 	this.name=name;
-	this.color=getColor(role);
 	this.x=0;
 	this.y=0;
 	this.connections=0;
         this.selected=JSON.parse(selected);
+        if(typeof(role)=="object"){
+	    this.color=[];
+	    for(var a=0;a<role.length;a++){
+		this.color.push(getColor(role[a]));
+	    }
+	}else{
+	    this.color=[getColor(role)];
+	}
 }
 function Edge(color,width,sign,start,end){
 	this.color=color;
@@ -221,19 +228,16 @@ function Graph(){
 	return "#"+color;
 }*/
 function getColor(role){
-    if(role.substring(0,3)=="TSG"){
+    if(role=="TSG"){//Tumor supressor gene
 	return "green";
     }
-    if(role.substring(0,4)=="none"){
-	return "gray";
-    }
-    if(role.substring(0,8)=="oncogene"){
+    if(role=="oncogene"){
 	return "orange";
     }
-    if(role.substring(0,10)=="BRCAdriver"){
-	return "blue";
+    if(role=="BRCAdriver"){//breast cancer driver
+	return "ivory";
     }
-    if(role.substring(0,10)=="Cancergene"){
+    if(role=="Cancergene"){
 	return "red";
     }
     return "gray";
@@ -267,7 +271,7 @@ function populateNodes(){
 	information=data.split("[1]");
 	information.splice(0,1);
 	for(var a=0;a<information.length;a++){
-		information[a]=information[a].split(",");
+		information[a]=information[a].split(",,");
 		var add=true;
 		for(var b=0;b<nodes.length;b++){
 			if(nodes[b].name==information[a][0]){
@@ -282,7 +286,7 @@ function populateNodes(){
 			}
 		}
 		if(add==true){
-			nodes.push(new Node(information[a][0],information[a][1],information[a][2]));
+			nodes.push(new Node(information[a][0],getRoles(information[a][1]),information[a][2]));
 		}
 	}
 	for(var a=0;a<information.length;a++){
@@ -319,6 +323,9 @@ function populateNodes(){
 		}
 	}*/
         positionNodes();
+}
+function getRoles(info){
+    return info.replace(",","/").split("/");
 }
 function positionNodes(){
     var centerX=0;
@@ -400,15 +407,23 @@ function drawLoading(){
     c.font="bold 20pt sans-serif";
     c.fillText("Loading...",0,0);
 }
-function drawCircle(x,y,radius,color){
+function drawCircle(x,y,radius,colors){
     c.strokeStyle="black";
     c.lineWidth=1;
-    c.fillStyle=color;
+    c.fillStyle=colors[0];
     c.beginPath();
     c.arc(x,y,radius,0,2*Math.PI,true);
     c.closePath();
     c.fill();
     c.stroke();
+    for(var a=1;a<colors.length;a++){
+	c.fillStyle=colors[a];
+	c.beginPath();
+	var rad=(radius/colors.length)*(colors.length-a)
+	c.arc(x,y,rad,0,2*Math.PI,true);
+	c.closePath();
+	c.fill();
+    }
     c.fillStyle="white";
     c.globalAlpha/=4;
     c.beginPath();
@@ -545,13 +560,13 @@ function drawLegend(){
 	c.globalAlpha=0.25;
     }
     c.translate(5,y);
-    drawCircle(20,0,20,"red");
-    drawCircle(20,35,10,"blue");
+    drawCircle(20,0,20,["red","white"]);
+    drawCircle(20,35,10,["green","orange"]);
     drawEdge(95,60,5,60,"red",15,"+");
     drawEdge(100,85,5,85,"green",5,"-");
     c.fillStyle="gray";
-    c.fillText("Very interconnected gene",50,7);
-    c.fillText("Less interconnected gene",40,40);
+    c.fillText("Very interconnected cancer gene (red)/breast cancer driver (white)",50,7);
+    c.fillText("Less interconnected tumor supressor gene (green)/oncogene (orange)",40,40);
     c.fillText("Confident, positive interaction when both genes are lowly expressed",115,70);
     c.fillText("Less confident, negative interaction when both genes are highly expressed",115,95);
     c.translate(-5,-y);
