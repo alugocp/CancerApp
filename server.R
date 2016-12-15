@@ -109,6 +109,7 @@ shinyServer(function(input,output){
 		return(bin)
 	}
 	output$nodeData <- renderPrint({
+		sep <- ",,"
 		if(is.null(input$searched)){
 			print("")
 			return()
@@ -119,7 +120,7 @@ shinyServer(function(input,output){
 			index <- match(searched[s],genes)
 			if(!is.na(index)){
 				con <- subset(interactions,interactions[,"y"]==index | interactions[,"x"]==index)
-				x <- paste(searched[s],getRole(index),"true",sep=",")
+				x <- paste(searched[s],getRole(index),"true",sep=sep)
 				if(length(con[,1])==0){
 					print(x)
 				}else{
@@ -136,7 +137,7 @@ shinyServer(function(input,output){
 							sign <- "-"
 						}
 						width <- abs(round(con[i,4],0))#*(factor/30)
-						x <- paste(x,connection,color,width,sign,sep=",")
+						x <- paste(x,connection,color,width,sign,sep=sep)
 					}
 					print(x)
 					for(i in 1:length(con[,1])){
@@ -146,7 +147,7 @@ shinyServer(function(input,output){
 							index1 <- con[i,"y"]
 						}
 						con1 <- subset(interactions,interactions[,"y"]==index1 | interactions[,"x"]==index1)
-						x1 <- paste(genes[index1],getRole(index1),"false",sep=",")
+						x1 <- paste(genes[index1],getRole(index1),"false",sep=sep)
 						if(length(con1[,1])>0){
 							for(a in 1:length(con1[,1])){
 								if(con1[a,"y"]==index1){
@@ -161,7 +162,7 @@ shinyServer(function(input,output){
 									sign <- "-"
 								}
 								width <- abs(round(con1[a,4],0))
-								x1 <- paste(x1,connection,color,width,sign,sep=",")
+								x1 <- paste(x1,connection,color,width,sign,sep=sep)
 							}
 						}
 						print(x1)
