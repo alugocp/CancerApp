@@ -8,16 +8,19 @@ var edges=Array();
 var selected=null;
 var mouse=[0,0];
 var origin={x:0,y:0};
+var scale=1;
 function formatClick(e){
 	var b=canvas.getBoundingClientRect();
 	e.x=e.clientX-b.left;
 	e.y=e.clientY-b.top;
         e.x-=origin.x;
         e.y-=origin.y;
+        e.x/=scale;
+        e.y/=scale;
 }
 function mousedown(e){
-	formatClick(e);
-        if(graph.visible && graph.mouseIn(e.x,e.y)){
+        formatClick(e);
+        if(graph.visible && graph.mouseIn(e.x*scale,e.y*scale)){
 	    selected=graph;
 	    return;
 	}
@@ -33,8 +36,12 @@ var moved=false;
 function mousemove(e){
 	formatClick(e);
 	if(selected!=null){
-		selected.x+=e.x-mouse[0];
-		selected.y+=e.y-mouse[1];
+	        var factor=1;
+	        if(selected==origin || selected==graph){
+		    factor=scale;
+		}
+		selected.x+=(e.x-mouse[0])*factor;
+		selected.y+=(e.y-mouse[1])*factor;
 	        moved=true;
 	}
 	mouse=[e.x,e.y];
@@ -59,7 +66,7 @@ function clickCanvas(){
 	        help.hover=false;
 	        return;
 	}*/
-        if(graph.visible && graph.mouseIn(mouse[0],mouse[1])){
+        if(graph.visible && graph.mouseIn(x*scale,y*scale)){
 	    graph.visible=false;
 	    return;
 	}
@@ -195,15 +202,15 @@ function Graph(){
     this.height=350;
     Graph.defaultSrc;//="default";
     this.setCoordinates=function(focusX,focusY,minOffset){
-	this.x=focusX+minOffset;
-	this.y=focusY-(this.height/2);
+	this.x=(focusX+minOffset)*scale;
+	this.y=(focusY-(this.height/2))*scale;
 	if(this.x+this.width+origin.x>canvas.width){
-	    this.x=focusX-minOffset-this.width;
+	    this.x=((focusX-minOffset)*scale)-this.width;
 	}
 	if(this.y+origin.y<0){
-	    this.y=focusY+minOffset;
+	    this.y=(focusY+minOffset)*scale;
 	}else if(this.y+this.height+origin.y>canvas.height){
-	    this.y=focusY-minOffset-this.height;
+	    this.y=((focusY-minOffset)*scale)-this.height;
 	}
 	this.visible=true;
     }
@@ -328,6 +335,7 @@ function getRoles(info){
     return info.replace(",","/").split("/");
 }
 function positionNodes(){
+    var extreme=null;
     var centerX=0;
     var centerY=0;
     for(var a=0;a<nodes.length;a++){
@@ -341,18 +349,56 @@ function positionNodes(){
 		rad=150;
 	    }
 	    centerX+=rad+25;
+	    if(a==0){
+		extreme={smallX:centerX,smallY:centerY,largeX:centerX,largeY:centerY};
+	    }
 	    nodes[a].x=centerX;
 	    nodes[a].y=centerY;
+	    checkForExtreme(nodes[a],extreme);
 	    for(var b=0;b<length;b++){
 		var theta=Math.PI*2*b/length
 		nodes[b+a+1].x=(Math.cos(theta)*rad)+centerX;
 		nodes[b+a+1].y=(Math.sin(theta)*rad)+centerY;
+		checkForExtreme(nodes[b+a+1],extreme);
 	    }
 	    centerX+=rad+25;
 	}
 	if(nodes[a].connections>0){
 	    nodes[a].radius+=Math.round(10*Math.log(nodes[a].connections));
 	}
+    }
+    if(extreme==null){
+	setScale(0,0,canvas.width,canvas.height);
+    }else{
+	setScale(extreme.smallX,extreme.smallY,extreme.largeX,extreme.largeY);
+    }
+}
+function setScale(left,top,right,bottom){
+    var width=right-left;
+    var height=bottom-top;
+    var xScale=canvas.width/width;
+    var yScale=canvas.height/height;
+    var sig=4;
+    if(xScale<yScale){
+	scale=Math.round(xScale*sig)/sig;
+    }else{
+	scale=Math.round(yScale*sig)/sig;
+    }
+    origin.x=-left*scale;
+    origin.y=-top*scale;
+}
+function checkForExtreme(node,extreme){
+    if(node.x+node.radius>extreme.largeX){
+	extreme.largeX=node.x+node.radius;
+    }
+    if(node.x-node.radius<extreme.smallX){
+	extreme.smallX=node.x-node.radius;
+    }
+    if(node.y+node.radius>extreme.largeY){
+	extreme.largeY=node.y+node.radius;
+    }
+    if(node.y-node.radius<extreme.smallY){
+	extreme.smallY=node.y-node.radius;
     }
 }
 function establishConnection(gene1,gene2,color,width,sign){
@@ -609,8 +655,10 @@ function update(){
         c.clearRect(0,0,canvas.width,canvas.height);
         drawLegend();
         c.translate(origin.x,origin.y);
+        c.scale(scale,scale);
         drawEdges();
         drawNodes();
+        c.scale(1/scale,1/scale);
         drawGraph();
         c.translate(-origin.x,-origin.y);
         	/*drawHelpButton();
