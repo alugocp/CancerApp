@@ -32,7 +32,7 @@ shinyServer(function(input,output){
 		lines(km,conf.int=F,mark.time=F,col="green")
 		
 		rm(binsets,bins,clin,km,d)
-		legend(1,0.4,c("low","med","high"),col=c("red","blue","green"),lty=c(1,1))
+		legend(1,0.4,c("low     ","med     ","high     "),col=c("red","blue","green"),lty=c(1,1))
 	}
 	graphEdge <- function(gene,gene1){
 		i <- match(gene,genes)
@@ -88,7 +88,7 @@ shinyServer(function(input,output){
 		lines(km,conf.int=F,mark.time=F,col="green")
 		
 		rm(clin,km,bins,bin)
-		legend(1,0.6,c("low-low","low-med","low-high","med-low","med-med","med-high","high-low","high-med","high-high"),col=c("red","yellow","orange","purple","blue","pink","gray","cyan","green"),lty=c(1,1))
+		legend(1,0.6,c("low-low     ","low-med     ","low-high     ","med-low     ","med-med     ","med-high     ","high-low     ","high-med     ","high-high     "),col=c("red","yellow","orange","purple","blue","pink","gray","cyan","green"),lty=c(1,1))
 	}
 	graphData <- function(label){
 		plot(fullKm,conf.int=F,mark.time=F,xlab="Time (Days)",ylab="Chance of Survival",main=label)
@@ -117,6 +117,10 @@ shinyServer(function(input,output){
 			return()
 		}
 		searched <- strsplit(input$searched,",")[[1]]
+		if(length(searched)==0){
+			print("")
+			return()
+		}
 		binColors <- c("red","yellow","orange","purple","blue","pink","gray","cyan","green")
 		for(s in 1:length(searched)){
 			index <- match(searched[s],genes)
