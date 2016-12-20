@@ -34,17 +34,52 @@ function mousedown(e){
 }
 var moved=false;
 function mousemove(e){
-	formatClick(e);
-	if(selected!=null){
-	        var factor=1;
-	        if(selected==origin || selected==graph){
-		    factor=scale;
-		}
-		selected.x+=(e.x-mouse[0])*factor;
-		selected.y+=(e.y-mouse[1])*factor;
-	        moved=true;
+    formatClick(e);
+    if(selected!=null){
+	var factor=1;
+	if(selected==origin || selected==graph){
+	    factor=scale;
 	}
-	mouse=[e.x,e.y];
+	selected.x+=(e.x-mouse[0])*factor;
+	selected.y+=(e.y-mouse[1])*factor;
+	moved=true;
+    }
+    mouse=[e.x,e.y];
+    if(graph.visible){
+	for(var a=0;a<graph.selectors.length;a++){
+	    Selector.statusColor(graph.selectors[a]);
+	}
+	var x=e.x*scale;
+	var y=e.y*scale;
+	var centerX=graph.x+graph.selectors[0].xOff+Selector.radius;
+	if(x>=centerX-Selector.radius && x<=centerX+Selector.radius){
+	    var centerY=graph.y+graph.selectors[0].yOff;
+	    if(y>=centerY-Selector.radius && y<=centerY+(Selector.buffer*(graph.selectors.length-1))+Selector.radius){
+		var index=Math.floor((y-(centerY-Selector.radius))/Selector.buffer);
+		graph.selectors[index].color="blue";
+	    }
+	}
+    }
+}
+function zoomIn(){
+    const limit=3.5;
+    if(scale>=limit){
+	return;
+    }
+    scale*=1.5;
+    if(scale>=limit){
+	scale=limit;
+    }
+}
+function zoomOut(){
+    const limit=0.4;
+    if(scale<=limit){
+	return;
+    }
+    scale/=1.5;
+    if(scale<=limit){
+	scale=limit;
+    }
 }
 var last;
 function clickCanvas(){
@@ -67,6 +102,14 @@ function clickCanvas(){
 	        return;
 	}*/
         if(graph.visible && graph.mouseIn(x*scale,y*scale)){
+	    for(var a=0;a<graph.selectors.length;a++){
+		var s=graph.selectors[a];
+		if(s.color=="blue"){
+		    s.status=!s.status;
+		    Selector.statusColor(s);
+		    return;
+		}
+	    }
 	    graph.visible=false;
 	    return;
 	}
@@ -75,6 +118,7 @@ function clickCanvas(){
 		if(distance(node,x,y)<=node.radius){
 			Shiny.onInputChange("gene",node.name);
 			Shiny.onInputChange("gene1","none");
+		        graph.setType("node");
 		        graph.setCoordinates(node.x,node.y,node.radius+2);
 		        if(last!=node){
 			    last=node;
@@ -87,6 +131,7 @@ function clickCanvas(){
 	        var edge=edges[a];
 		if(edgeClick(nodes[edge.start],nodes[edge.end],edge.width)){
 		        graph.setCoordinates(edge.signPos[0],edge.signPos[1],15);
+		        graph.setType("edge");
 		        if(last!=edge){
 			    last=edge;
 			    graph.image.src=Graph.defaultSrc;
@@ -201,6 +246,7 @@ function Graph(){
     this.width=700;
     this.height=350;
     Graph.defaultSrc;//="default";
+    this.selectors=[];
     this.setCoordinates=function(focusX,focusY,minOffset){
 	this.x=(focusX+minOffset)*scale;
 	this.y=(focusY-(this.height/2))*scale;
@@ -216,6 +262,37 @@ function Graph(){
     }
     this.mouseIn=function(x,y){
 	return (x>=this.x && x<=this.x+this.width && y>=this.y && y<=this.y+this.height);
+    }
+    this.setType=function(type){
+	this.type=type;
+	var s=3;
+	if(type=="edge"){
+	    s=9;
+	}
+	this.selectors=[];
+	for(var a=0;a<s;a++){
+	    this.selectors.push(new Selector(type,a));
+	}
+    }
+}
+function Selector(graphType,index){
+    Selector.buffer=13;
+    Selector.radius=5;
+    this.color="gray";
+    this.status=true;
+    this.xOff=103;
+    this.yOff=203;
+    if(graphType=="edge"){
+	this.xOff=124;
+	this.yOff=160;
+    }
+    this.yOff+=index*Selector.buffer;
+    Selector.statusColor=function(s){
+	if(s.status){
+	    s.color="gray";
+	}else{
+	    s.color="white";
+	}
     }
 }
 
@@ -444,9 +521,20 @@ function drawGraph(){
 		c.strokeRect(0,0,graph.image.width,graph.image.height);
 		c.fillText("x",graph.image.width-25,25);
 		c.scale(graph.image.width/graph.width,graph.image.height/graph.height);
+		drawSelectors(graph.selectors);
 	    }
 	    c.translate(-graph.x,-graph.y);
 	}
+}
+function drawSelectors(s){
+    for(var a=0;a<s.length;a++){
+	c.beginPath();
+	c.arc(s[a].xOff,s[a].yOff,Selector.radius,0,Math.PI*2,true);
+	c.closePath();
+	c.fillStyle=s[a].color;
+	c.fill();
+	c.stroke();
+    }
 }
 function drawLoading(){
     c.fillStyle="maroon";
