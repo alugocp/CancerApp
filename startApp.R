@@ -26,4 +26,9 @@ roles <- unique(cbind2(names,roles))
 roles <- subset(roles,roles[,2]!="")
 rm(names)
 
+# initialize graph vars
+km <- NULL
+title <- NULL
+colors <- NULL
+
 runApp("../CancerApp",host="128.8.132.200",port=2017)

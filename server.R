@@ -3,95 +3,119 @@ shinyServer(function(input,output){
 		if(is.null(input$gene)){
 			graphData("")
 		}else{
-			if(input$gene1=="none"){
-				graphNode(input$gene)
+			if(is.null(input$bins) || input$bins=="all"){
+				if(input$gene1=="none"){
+					graphNode(input$gene)
+				}else{
+					graphEdge(input$gene,input$gene1)
+				}
 			}else{
-				graphEdge(input$gene,input$gene1)
+				graphData(title)
+				for(b in 1:nchar(input$bins)){
+					if(substr(input$bins,b,b)=="1"){
+						lines(km[[b]],conf.int=F,mark.tim=F,col=colors[b])
+					}
+				}
+				addLegend()
 			}
 		}
 	})
 	graphNode <- function(gene){
 		i <- match(gene,genes)
 		bins <- bin.map[i,]
-		graphData(gene)
+		title <<- gene
+		graphData(title)
 		binsets <- split(data.frame(data[,1:2]),bins[])
+		colors <<- c("red","blue","green")
+		km <<- c()
 
 		d <- binsets$"0"
 		clin <- with(d,Surv(time,status==1))
-		km <- survfit(clin~1,data=d,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="red")
+		km[1] <<- list(survfit(clin~1,data=d,conf.type="log-log"))
+		lines(km[[1]],conf.int=F,mark.time=F,col=colors[1])
 		
 		d <- binsets$"1"
 		clin <- with(d,Surv(time,status==1))
-		km <- survfit(clin~1,data=d,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="blue")
+		km[2] <<- list(survfit(clin~1,data=d,conf.type="log-log"))
+		lines(km[[2]],conf.int=F,mark.time=F,col=colors[2])
 		
 		d <- binsets$"2"
 		clin <- with(d,Surv(time,status==1))
-		km <- survfit(clin~1,data=d,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="green")
+		km[3] <<- list(survfit(clin~1,data=d,conf.type="log-log"))
+		lines(km[[3]],conf.int=F,mark.time=F,col=colors[3])
 		
-		rm(binsets,bins,clin,km,d)
-		legend(1,0.4,c("low     ","med     ","high     "),col=c("red","blue","green"),lty=c(1,1))
+		rm(binsets,bins,clin,d)
+		addLegend()
 	}
 	graphEdge <- function(gene,gene1){
 		i <- match(gene,genes)
 		i1 <- match(gene1,genes)
 		bins <- (bin.map[i,]*3)+bin.map[i1,]+1
 		#flipbins <- (bin.map[i1,]*3)+bin.map[i,]+1
-		graphData(paste(gene," vs. ",gene1))
+		title <<- paste(gene," vs. ",gene1)
+		graphData(title)
 		binsets <- split(data.frame(data[,1:2]),bins[])
-		
+		colors <<- c("red","yellow","orange","purple","blue","pink","gray","cyan","green")
+		km <<- c()		
+
 		bin <- binsets$"1"
 		clin <- with(bin,Surv(time,status==1))
-		km <- survfit(clin~1,data=bin,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="red")
+		km[1] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
+		lines(km[[1]],conf.int=F,mark.time=F,col=colors[1])
 		
 		bin <- binsets$"2"
 		clin <- with(bin,Surv(time,status==1))
-		km <- survfit(clin~1,data=bin,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="yellow")
+		km[2] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
+		lines(km[[2]],conf.int=F,mark.time=F,col=colors[2])
 		
 		bin <- binsets$"3"
 		clin <- with(bin,Surv(time,status==1))
-		km <- survfit(clin~1,data=bin,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="orange")
+		km[3] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
+		lines(km[[3]],conf.int=F,mark.time=F,col=colors[3])
 		
 		bin <- binsets$"4"
 		clin <- with(bin,Surv(time,status==1))
-		km <- survfit(clin~1,data=bin,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="purple")
+		km[4] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
+		lines(km[[4]],conf.int=F,mark.time=F,col=colors[4])
 		
 		bin <- binsets$"5"
 		clin <- with(bin,Surv(time,status==1))
-		km <- survfit(clin~1,data=bin,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="blue")
+		km[5] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
+		lines(km[[5]],conf.int=F,mark.time=F,col=colors[5])
 		
 		bin <- binsets$"6"
 		clin <- with(bin,Surv(time,status==1))
-		km <- survfit(clin~1,data=bin,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="pink")
+		km[6] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
+		lines(km[[6]],conf.int=F,mark.time=F,col=colors[6])
 		
 		bin <- binsets$"7"
 		clin <- with(bin,Surv(time,status==1))
-		km <- survfit(clin~1,data=bin,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="gray")
+		km[7] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
+		lines(km[[7]],conf.int=F,mark.time=F,col=colors[7])
 		
 		bin <- binsets$"8"
 		clin <- with(bin,Surv(time,status==1))
-		km <- survfit(clin~1,data=bin,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="cyan")
+		km[8] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
+		lines(km[[8]],conf.int=F,mark.time=F,col=colors[8])
 		
 		bin <- binsets$"9"
 		clin <- with(bin,Surv(time,status==1))
-		km <- survfit(clin~1,data=bin,conf.type="log-log")
-		lines(km,conf.int=F,mark.time=F,col="green")
+		km[9] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
+		lines(km[[9]],conf.int=F,mark.time=F,col=colors[9])
 		
-		rm(clin,km,bins,bin)
-		legend(1,0.6,c("low-low     ","low-med     ","low-high     ","med-low     ","med-med     ","med-high     ","high-low     ","high-med     ","high-high     "),col=c("red","yellow","orange","purple","blue","pink","gray","cyan","green"),lty=c(1,1))
+		#setKm(km1)		
+		rm(clin,bins,bin)
+		addLegend()
 	}
 	graphData <- function(label){
 		plot(fullKm,conf.int=F,mark.time=F,xlab="Time (Days)",ylab="Chance of Survival",main=label)
+	}
+	addLegend <- function(){
+		if(length(colors)==3){
+			legend(1,0.4,c("low     ","med     ","high     "),col=colors,lty=c(1,1))
+		}else{
+			legend(1,0.6,c("low-low     ","low-med     ","low-high     ","med-low     ","med-med     ","med-high     ","high-low     ","high-med     ","high-high     "),col=colors,lty=c(1,1))
+		}
 	}
 	getRole <- function(index){
 		i <- match(genes[index],roles[,1])
@@ -112,7 +136,7 @@ shinyServer(function(input,output){
 	}
 	output$nodeData <- renderPrint({
 		sep <- ",,"
-		if(is.null(input$searched)){
+		if(is.na(input$searched)){#is.null()
 			print("")
 			return()
 		}
