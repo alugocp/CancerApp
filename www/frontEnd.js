@@ -107,10 +107,13 @@ function clickCanvas(){
 		if(s.color=="blue"){
 		    s.status=!s.status;
 		    Selector.statusColor(s);
+		    Shiny.onInputChange("bins",Selector.getSelectors());
 		    return;
 		}
 	    }
-	    graph.visible=false;
+	    if(x*scale>graph.x+graph.width-20 && y*scale<graph.y+20){
+		graph.visible=false;
+	    }
 	    return;
 	}
 	for(var a=nodes.length-1;a>=0;a--){
@@ -151,6 +154,7 @@ function edgeClick(node,node1,width){
 				if(Math.abs(x-node.x)<width){
 					Shiny.onInputChange("gene",node.name);
 					Shiny.onInputChange("gene1",node1.name);
+				        Shiny.onInputChange("bins","all");
 					return true;
 				}
 			}
@@ -166,6 +170,7 @@ function edgeClick(node,node1,width){
 			if(Math.abs(y-expectedY)<leniency){
 				Shiny.onInputChange("gene",node.name);
 				Shiny.onInputChange("gene1",node1.name);
+			        Shiny.onInputChange("bins","all");
 				return true;
 			}
 		}
@@ -293,6 +298,17 @@ function Selector(graphType,index){
 	}else{
 	    s.color="white";
 	}
+    }
+    Selector.getSelectors=function(){
+	var value="";
+	for(var s=0;s<graph.selectors.length;s++){
+	    if(graph.selectors[s].status){
+		value+="1";
+	    }else{
+		value+="0";
+	    }
+	}
+	return value;
     }
 }
 
@@ -519,8 +535,8 @@ function drawGraph(){
 		c.scale(graph.width/graph.image.width,graph.height/graph.image.height);
 		c.drawImage(graph.image,0,0);
 		c.strokeRect(0,0,graph.image.width,graph.image.height);
-		c.fillText("x",graph.image.width-25,25);
 		c.scale(graph.image.width/graph.width,graph.image.height/graph.height);
+		c.fillText("x",graph.width-20,20);
 		drawSelectors(graph.selectors);
 	    }
 	    c.translate(-graph.x,-graph.y);
@@ -690,7 +706,7 @@ function drawLegend1(){
 }*/
 function drawLegend(){
     var y=canvas.height-100;
-    if(mouse[1]+origin.y<y-20){
+    if((mouse[1]*scale)+origin.y<y-20){
 	c.globalAlpha=0.25;
     }
     c.translate(5,y);
