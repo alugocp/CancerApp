@@ -119,6 +119,7 @@ function clickCanvas(){
 	for(var a=nodes.length-1;a>=0;a--){
 		var node=nodes[a];
 		if(distance(node,x,y)<=node.radius){
+			Shiny.onInputChange("bins","all");
 			Shiny.onInputChange("gene",node.name);
 			Shiny.onInputChange("gene1","none");
 		        graph.setType("node");
@@ -152,9 +153,9 @@ function edgeClick(node,node1,width){
 		if(Math.abs(m)==Infinity){
 			if((y>node.y)!=(y>node1.y)){
 				if(Math.abs(x-node.x)<width){
+					Shiny.onInputChange("bins","all");
 					Shiny.onInputChange("gene",node.name);
 					Shiny.onInputChange("gene1",node1.name);
-				        Shiny.onInputChange("bins","all");
 					return true;
 				}
 			}
@@ -168,9 +169,9 @@ function edgeClick(node,node1,width){
 			}
 			var leniency=Math.abs(width/Math.cos(Math.atan(m)));
 			if(Math.abs(y-expectedY)<leniency){
+				Shiny.onInputChange("bins","all");
 				Shiny.onInputChange("gene",node.name);
 				Shiny.onInputChange("gene1",node1.name);
-			        Shiny.onInputChange("bins","all");
 				return true;
 			}
 		}
@@ -350,6 +351,7 @@ function setCoordinates(node,index,length,center){
 }
 var nodeData="";
 function populateNodes(){
+	graph.visible=false;
 	c.font="10pt sans-serif";
 	while(nodes.length>0){
 		nodes.splice(0,1);
@@ -422,6 +424,41 @@ function populateNodes(){
 			nodes[a].radius+=Math.round(10*Math.log(nodes[a].connections));
 		}
 	}*/
+	if(document.getElementById("filter").checked){
+		for(var a=0;a<nodes.length;a++){
+			if(nodes[a].connections==1){
+				for(var b=0;b<edges.length;b++){
+					if(edges[b].start==a || edges[b].end==a){
+						edges[b].remove=1;
+						//break;
+					}
+				}
+			}
+		}
+		for(var a=0;a<edges.length;a++){
+			if(edges[a].remove!=undefined){
+				nodes[edges[a].start].connections--;
+				nodes[edges[a].end].connections--;
+				edges.splice(a,1);
+				a--;
+			}
+		}
+		for(var a=0;a<nodes.length;a++){
+			if(!nodes[a].selected && nodes[a].connections==0){
+				for(var b=0;b<edges.length;b++){
+					if(edges[b].start>a){
+						edges[b].start--;
+					}
+					if(edges[b].end>a){
+						edges[b].end--;
+					}
+				}
+				nodes.splice(a,1);
+				a--;
+			}
+		}
+		//hello();
+	}
         positionNodes();
 }
 function getRoles(info){
@@ -769,6 +806,9 @@ function update(){
 	}*/
 }
 
+$("#filter").click(function(){
+	populateNodes();
+});
 var graph=new Graph();
 setCanvasDimensions();
 update();
