@@ -31,4 +31,4 @@ km <- NULL
 title <- NULL
 colors <- NULL
 
-runApp("../CancerApp",host="128.8.132.200",port=2017)
+runApp("../CancerApp",host="127.0.0.1",port=2017)

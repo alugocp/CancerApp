@@ -17,8 +17,10 @@ shinyUI(fluidPage(
 		column(3,
 			tags$br(),
 			tags$input(type="file",id="uploader",multiple="false",onchange="onUpload()"),
+			tags$label("Zoom: "),
 			tags$button("+",type="button",onclick="zoomIn()"),
-			tags$button("-",type="button",onclick="zoomOut()")
+			tags$button("-",type="button",onclick="zoomOut()"),
+			tags$input("  Filter",type="checkbox",id="filter")
 		),
 		column(3,
 			id="shoutoutColumn",
