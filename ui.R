@@ -1,5 +1,5 @@
 library(shiny)
-load("validation.data.mRNA.RData")
+#load("validation.data.mRNA.RData")
 shinyUI(fluidPage(
 	theme="style.css",
 	onmouseup="selected=null",
