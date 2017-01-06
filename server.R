@@ -3,120 +3,133 @@ shinyServer(function(input,output){
 		if(is.null(input$gene)){
 			graphData("")
 		}else{
-			if(is.null(input$bins) || input$bins=="all"){
+			#if(is.null(input$bins) || input$bins=="all"){
 				if(input$gene1=="none"){
-					graphNode(input$gene)
+					graphNode(input$gene,input$bins)
 				}else{
-					graphEdge(input$gene,input$gene1)
+					#print(input$addToTitle)
+					graphEdge(input$gene,input$gene1,input$addToTitle,input$bins)
 				}
-			}else{
-				graphData(title)
-				for(b in 1:nchar(input$bins)){
-					if(substr(input$bins,b,b)=="1"){
-						lines(km[[b]],conf.int=F,mark.tim=F,col=colors[b])
-					}
-				}
-				addLegend()
-			}
+			#}else{
+			#	if(input$gene1!="none" && length(km)!=9){
+			#		isolate(graphEdge(input$gene,input$gene1,input$addToTitle))
+			#	}
+			#	graphData(title)
+			#	for(b in 1:nchar(input$bins)){
+			#		if(substr(input$bins,b,b)=="1"){
+			#			lines(km[[b]],conf.int=F,mark.tim=F,col=colors[b])
+			#		}
+			#	}
+			#	addLegend()
+			#}
 		}
 	})
-	graphNode <- function(gene){
+	graphNode <- function(gene,selected.bins){
 		i <- match(gene,genes)
 		bins <- bin.map[i,]
-		title <<- gene
-		graphData(title)
+		graphData(gene)
 		binsets <- split(data.frame(data[,1:2]),bins[])
-		colors <<- c("red","blue","green")
-		km <<- c()
+		colors <- c("red","blue","green")
 
-		d <- binsets$"0"
-		clin <- with(d,Surv(time,status==1))
-		km[1] <<- list(survfit(clin~1,data=d,conf.type="log-log"))
-		lines(km[[1]],conf.int=F,mark.time=F,col=colors[1])
-		
-		d <- binsets$"1"
-		clin <- with(d,Surv(time,status==1))
-		km[2] <<- list(survfit(clin~1,data=d,conf.type="log-log"))
-		lines(km[[2]],conf.int=F,mark.time=F,col=colors[2])
-		
-		d <- binsets$"2"
-		clin <- with(d,Surv(time,status==1))
-		km[3] <<- list(survfit(clin~1,data=d,conf.type="log-log"))
-		lines(km[[3]],conf.int=F,mark.time=F,col=colors[3])
-		
-		rm(binsets,bins,clin,d)
-		addLegend()
+		if(substr(selected.bins,1,1)=="1"){
+			d <- binsets$"0"
+			clin <- with(d,Surv(time,status==1))
+			km <- survfit(clin~1,data=d,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[1])
+		}
+		if(substr(selected.bins,2,2)=="1"){
+			d <- binsets$"1"
+			clin <- with(d,Surv(time,status==1))
+			km <- survfit(clin~1,data=d,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[2])
+		}
+		if(substr(selected.bins,3,3)=="1"){
+			d <- binsets$"2"
+			clin <- with(d,Surv(time,status==1))
+			km <- survfit(clin~1,data=d,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[3])
+		}
+	
+		rm(binsets,bins,clin,d,km)
+		legend(1,0.4,c("low     ","med     ","high     "),col=colors,lty=c(1,1))
 	}
-	graphEdge <- function(gene,gene1){
+	graphEdge <- function(gene,gene1,addToTitle,selected.bins){
 		i <- match(gene,genes)
 		i1 <- match(gene1,genes)
 		bins <- (bin.map[i,]*3)+bin.map[i1,]+1
 		#flipbins <- (bin.map[i1,]*3)+bin.map[i,]+1
-		title <<- paste(gene," vs. ",gene1)
-		graphData(title)
+		graphData(paste(gene," vs. ",gene1,addToTitle))
 		binsets <- split(data.frame(data[,1:2]),bins[])
-		colors <<- c("red","yellow","orange","purple","blue","pink","gray","cyan","green")
-		km <<- c()		
+		colors <- c("red","yellow","orange","purple","blue","pink","gray","cyan","green")		
 
-		bin <- binsets$"1"
-		clin <- with(bin,Surv(time,status==1))
-		km[1] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
-		lines(km[[1]],conf.int=F,mark.time=F,col=colors[1])
+		if(substr(selected.bins,1,1)=="1"){
+			bin <- binsets$"1"
+			clin <- with(bin,Surv(time,status==1))
+			km <- survfit(clin~1,data=bin,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[1])
+		}
+		if(substr(selected.bins,2,2)=="1"){
+			bin <- binsets$"2"
+			clin <- with(bin,Surv(time,status==1))
+			km <- survfit(clin~1,data=bin,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[2])
+		}
+		if(substr(selected.bins,3,3)=="1"){
+			bin <- binsets$"3"
+			clin <- with(bin,Surv(time,status==1))
+			km <- survfit(clin~1,data=bin,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[3])
+		}
+		if(substr(selected.bins,4,4)=="1"){
+			bin <- binsets$"4"
+			clin <- with(bin,Surv(time,status==1))
+			km <- survfit(clin~1,data=bin,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[4])
+		}
+		if(substr(selected.bins,5,5)=="1"){
+			bin <- binsets$"5"
+			clin <- with(bin,Surv(time,status==1))
+			km <- survfit(clin~1,data=bin,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[5])
+		}
+		if(substr(selected.bins,6,6)=="1"){
+			bin <- binsets$"6"
+			clin <- with(bin,Surv(time,status==1))
+			km <- survfit(clin~1,data=bin,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[6])
+		}
+		if(substr(selected.bins,7,7)=="1"){
+			bin <- binsets$"7"
+			clin <- with(bin,Surv(time,status==1))
+			km <- survfit(clin~1,data=bin,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[7])
+		}
+		if(substr(selected.bins,8,8)=="1"){
+			bin <- binsets$"8"
+			clin <- with(bin,Surv(time,status==1))
+			km <- survfit(clin~1,data=bin,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[8])
+		}
+		if(substr(selected.bins,9,9)=="1"){
+			bin <- binsets$"9"
+			clin <- with(bin,Surv(time,status==1))
+			km <- survfit(clin~1,data=bin,conf.type="log-log")
+			lines(km,conf.int=F,mark.time=F,col=colors[9])
+		}
 		
-		bin <- binsets$"2"
-		clin <- with(bin,Surv(time,status==1))
-		km[2] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
-		lines(km[[2]],conf.int=F,mark.time=F,col=colors[2])
-		
-		bin <- binsets$"3"
-		clin <- with(bin,Surv(time,status==1))
-		km[3] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
-		lines(km[[3]],conf.int=F,mark.time=F,col=colors[3])
-		
-		bin <- binsets$"4"
-		clin <- with(bin,Surv(time,status==1))
-		km[4] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
-		lines(km[[4]],conf.int=F,mark.time=F,col=colors[4])
-		
-		bin <- binsets$"5"
-		clin <- with(bin,Surv(time,status==1))
-		km[5] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
-		lines(km[[5]],conf.int=F,mark.time=F,col=colors[5])
-		
-		bin <- binsets$"6"
-		clin <- with(bin,Surv(time,status==1))
-		km[6] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
-		lines(km[[6]],conf.int=F,mark.time=F,col=colors[6])
-		
-		bin <- binsets$"7"
-		clin <- with(bin,Surv(time,status==1))
-		km[7] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
-		lines(km[[7]],conf.int=F,mark.time=F,col=colors[7])
-		
-		bin <- binsets$"8"
-		clin <- with(bin,Surv(time,status==1))
-		km[8] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
-		lines(km[[8]],conf.int=F,mark.time=F,col=colors[8])
-		
-		bin <- binsets$"9"
-		clin <- with(bin,Surv(time,status==1))
-		km[9] <<- list(survfit(clin~1,data=bin,conf.type="log-log"))
-		lines(km[[9]],conf.int=F,mark.time=F,col=colors[9])
-		
-		#setKm(km1)		
-		rm(clin,bins,bin)
-		addLegend()
+		rm(clin,bins,bin,km)
+		legend(1,0.6,c("low-low (1)     ","low-med (2)     ","low-high (3)     ","med-low (4)     ","med-med (5)     ","med-high (6)     ","high-low (7)     ","high-med (8)     ","high-high (9)     "),col=colors,lty=c(1,1))
 	}
 	graphData <- function(label){
 		plot(fullKm,conf.int=F,mark.time=F,xlab="Time (Days)",ylab="Chance of Survival",main=label)
 	}
-	addLegend <- function(){
-		if(length(colors)==3){
-			legend(1,0.4,c("low     ","med     ","high     "),col=colors,lty=c(1,1))
-		}else{
-			legend(1,0.6,c("low-low     ","low-med     ","low-high     ","med-low     ","med-med     ","med-high     ","high-low     ","high-med     ","high-high     "),col=colors,lty=c(1,1))
-		}
-	}
+	#addLegend <- function(){
+	#	if(length(colors)==3){
+	#		legend(1,0.4,c("low     ","med     ","high     "),col=colors,lty=c(1,1))
+	#	}else{
+	#		legend(1,0.6,c("low-low (1)     ","low-med (2)     ","low-high (3)     ","med-low (4)     ","med-med (5)     ","med-high (6)     ","high-low (7)     ","high-med (8)     ","high-high (9)     "),col=colors,lty=c(1,1))
+	#	}
+	#}
 	getRole <- function(index){
 		i <- match(genes[index],roles[,1])
 		if(!is.na(i)){

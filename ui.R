@@ -1,5 +1,4 @@
-library(shiny)
-#load("validation.data.mRNA.RData")
+#library(shiny)
 shinyUI(fluidPage(
 	theme="style.css",
 	onmouseup="selected=null",
@@ -20,7 +19,19 @@ shinyUI(fluidPage(
 			tags$label("Zoom: "),
 			tags$button("+",type="button",onclick="zoomIn()"),
 			tags$button("-",type="button",onclick="zoomOut()"),
-			tags$input("  Filter",type="checkbox",id="filter")
+			tags$input("Filter single-interaction nodes",type="checkbox",id="filter"),
+			tags$select(id="colorFilter",
+				tags$option("don't filter interaction type",value="all"),
+				tags$option("low-low (1)(red)",value="0"),
+				tags$option("low-med (2)(yellow)",value="1"),
+				tags$option("low-high (3)(orange)",value="2"),
+				tags$option("med-low (4)(purple)",value="3"),
+				tags$option("med-med (5)(blue)",value="4"),
+				tags$option("med-high (6)(pink)",value="5"),
+				tags$option("high-low (7)(gray)",value="6"),
+				tags$option("high-med (8)(cyan)",value="7"),
+				tags$option("high-high (9)(green)",value="8")
+			)
 		),
 		column(3,
 			id="shoutoutColumn",
