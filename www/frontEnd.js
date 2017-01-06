@@ -3,6 +3,8 @@ var canvas=document.getElementById("canvas");
 var c=canvas.getContext("2d");
 
 //engine support
+var colors=["red","yellow","orange","purple","blue","pink","gray","cyan","green"];
+var bins=["low-low","low-med","low-high","med-low","med-med","med-high","high-low","high-med","high-high"];
 var nodes=Array();
 var edges=Array();
 var selected=null;
@@ -119,10 +121,10 @@ function clickCanvas(){
 	for(var a=nodes.length-1;a>=0;a--){
 		var node=nodes[a];
 		if(distance(node,x,y)<=node.radius){
-			Shiny.onInputChange("bins","all");
+			Shiny.onInputChange("bins","111");
 			Shiny.onInputChange("gene",node.name);
 			Shiny.onInputChange("gene1","none");
-		        graph.setType("node");
+		        graph.setType("node","111");
 		        graph.setCoordinates(node.x,node.y,node.radius+2);
 		        if(last!=node){
 			    last=node;
@@ -133,9 +135,15 @@ function clickCanvas(){
 	}
 	for(var a=edges.length-1;a>=0;a--){
 	        var edge=edges[a];
-		if(edgeClick(nodes[edge.start],nodes[edge.end],edge.width)){
-		        graph.setCoordinates(edge.signPos[0],edge.signPos[1],15);
-		        graph.setType("edge");
+		if(edgeClick(nodes[edge.start],nodes[edge.end],edge)){
+			setEdgeData(edge,nodes[edge.start].name,nodes[edge.end].name);
+			graph.setType("edge",edge.getBins());
+			/*for(var b=0;b<graph.selectors.length;b++){
+				if(colors[b]!=edge.color){
+					graph.selectors[b].status=false;
+				}
+			}*/
+			graph.setCoordinates(edge.signPos[0],edge.signPos[1],15);
 		        if(last!=edge){
 			    last=edge;
 			    graph.image.src=Graph.defaultSrc;
@@ -145,17 +153,16 @@ function clickCanvas(){
 	}
         graph.visible=false;
 }
-function edgeClick(node,node1,width){
+function edgeClick(node,node1,edge){
 	var x=mouse[0];
 	var y=mouse[1];
+	var width=edge.width;
 	if((x>node.x)!=(x>node1.x) || (node.x==node1.x)){
 		var m=(node.y-node1.y)/(node.x-node1.x);
 		if(Math.abs(m)==Infinity){
 			if((y>node.y)!=(y>node1.y)){
 				if(Math.abs(x-node.x)<width){
-					Shiny.onInputChange("bins","all");
-					Shiny.onInputChange("gene",node.name);
-					Shiny.onInputChange("gene1",node1.name);
+					//setEdgeData(edge,node.name,node1.name);
 					return true;
 				}
 			}
@@ -169,14 +176,20 @@ function edgeClick(node,node1,width){
 			}
 			var leniency=Math.abs(width/Math.cos(Math.atan(m)));
 			if(Math.abs(y-expectedY)<leniency){
-				Shiny.onInputChange("bins","all");
-				Shiny.onInputChange("gene",node.name);
-				Shiny.onInputChange("gene1",node1.name);
+				//setEdgeData(edge,node.name,node1.name);
 				return true;
 			}
 		}
 	}
 	return false;
+}
+function setEdgeData(edge,gene,gene1){
+	var i=colors.indexOf(edge.color);
+	var addToTitle=": "+bins[i]+" ("+(i+1)+")(Confidence: "+edge.width+"/30)";
+	Shiny.onInputChange("addToTitle",addToTitle);
+	Shiny.onInputChange("bins",edge.getBins());
+	Shiny.onInputChange("gene",gene);
+	Shiny.onInputChange("gene1",gene1);
 }
 function distance(){
 	function dist(x,y,x1,y1){
@@ -234,6 +247,17 @@ function Edge(color,width,sign,start,end){
 	this.start=start;
 	this.end=end;
         this.signPos=[];
+	this.getBins=function(){
+		var bin="";
+		for(var a=0;a<colors.length;a++){
+			if(colors[a]==this.color){
+				bin+="1";
+			}else{
+				bin+="0";
+			}
+		}
+		return bin;
+	}
 }
 /*function Help(radius){
         this.x=canvas.width-radius;
@@ -269,7 +293,7 @@ function Graph(){
     this.mouseIn=function(x,y){
 	return (x>=this.x && x<=this.x+this.width && y>=this.y && y<=this.y+this.height);
     }
-    this.setType=function(type){
+    this.setType=function(type,bins){
 	this.type=type;
 	var s=3;
 	if(type=="edge"){
@@ -277,7 +301,11 @@ function Graph(){
 	}
 	this.selectors=[];
 	for(var a=0;a<s;a++){
-	    this.selectors.push(new Selector(type,a));
+		var selector=new Selector(type,a);
+		if(bins.substring(a,a+1)=="1"){
+			selector.status=true;
+		}
+		this.selectors.push(selector);
 	}
     }
 }
@@ -285,11 +313,11 @@ function Selector(graphType,index){
     Selector.buffer=13;
     Selector.radius=5;
     this.color="gray";
-    this.status=true;
+    this.status=false;
     this.xOff=103;
     this.yOff=203;
     if(graphType=="edge"){
-	this.xOff=124;
+	this.xOff=137;
 	this.yOff=160;
     }
     this.yOff+=index*Selector.buffer;
@@ -343,12 +371,12 @@ function getColor(role){
     }
     return "gray";
 }
-function setCoordinates(node,index,length,center){
+/*function setCoordinates(node,index,length,center){
 	var angle=index*(Math.PI*2)/length;
         var distance=150;
 	node.x=Math.round(center.x+(distance*Math.cos(angle)));
 	node.y=Math.round(center.y+(distance*Math.sin(angle)));
-}
+}*/
 var nodeData="";
 function populateNodes(){
 	graph.visible=false;
@@ -424,42 +452,64 @@ function populateNodes(){
 			nodes[a].radius+=Math.round(10*Math.log(nodes[a].connections));
 		}
 	}*/
+	var filterColor=$("#colorFilter option:selected").val();
+	if(filterColor!="all"){
+		colorFilter(parseInt(filterColor));
+		cleanAfterFilters();
+	}
 	if(document.getElementById("filter").checked){
-		for(var a=0;a<nodes.length;a++){
-			if(nodes[a].connections==1){
-				for(var b=0;b<edges.length;b++){
-					if(edges[b].start==a || edges[b].end==a){
-						edges[b].remove=1;
-						//break;
-					}
-				}
-			}
-		}
-		for(var a=0;a<edges.length;a++){
-			if(edges[a].remove!=undefined){
-				nodes[edges[a].start].connections--;
-				nodes[edges[a].end].connections--;
-				edges.splice(a,1);
-				a--;
-			}
-		}
-		for(var a=0;a<nodes.length;a++){
-			if(!nodes[a].selected && nodes[a].connections==0){
-				for(var b=0;b<edges.length;b++){
-					if(edges[b].start>a){
-						edges[b].start--;
-					}
-					if(edges[b].end>a){
-						edges[b].end--;
-					}
-				}
-				nodes.splice(a,1);
-				a--;
-			}
-		}
-		//hello();
+		connectionFilter();
+		cleanAfterFilters();
 	}
         positionNodes();
+}
+function connectionFilter(){
+	for(var a=0;a<nodes.length;a++){
+		if(nodes[a].connections<=1 && !nodes[a].selected){
+			for(var b=0;b<edges.length;b++){
+				if(edges[b].start==a || edges[b].end==a){
+					edges[b].remove=1;
+					//break;
+				}
+			}
+		}
+	}
+}
+function colorFilter(color){
+	for(var a=0;a<edges.length;a++){
+		if(edges[a].color!=colors[color]){
+			edges[a].remove=1;
+		}
+	}
+}
+
+function cleanAfterFilters(){
+	for(var a=0;a<edges.length;a++){
+		if(edges[a].remove!=undefined){
+			if(nodes[edges[a].start].connections>0){
+				nodes[edges[a].start].connections--;
+			}
+			if(nodes[edges[a].end].connections>0){
+				nodes[edges[a].end].connections--;
+			}
+			edges.splice(a,1);
+			a--;
+		}
+	}
+	for(var a=0;a<nodes.length;a++){
+		if(!nodes[a].selected && nodes[a].connections==0){
+			for(var b=0;b<edges.length;b++){
+				if(edges[b].start>a){
+					edges[b].start--;
+				}
+				if(edges[b].end>a){
+					edges[b].end--;
+				}
+			}
+			nodes.splice(a,1);
+			a--;
+		}
+	}
 }
 function getRoles(info){
     return info.replace(",","/").split("/");
@@ -487,8 +537,8 @@ function positionNodes(){
 	    checkForExtreme(nodes[a],extreme);
 	    for(var b=0;b<length;b++){
 		var theta=Math.PI*2*b/length
-		nodes[b+a+1].x=(Math.cos(theta)*rad)+centerX;
-		nodes[b+a+1].y=(Math.sin(theta)*rad)+centerY;
+		nodes[b+a+1].x=Math.round(Math.cos(theta)*rad)+centerX;
+		nodes[b+a+1].y=Math.round(Math.sin(theta)*rad)+centerY;
 		checkForExtreme(nodes[b+a+1],extreme);
 	    }
 	    centerX+=rad+25;
@@ -507,7 +557,7 @@ function setScale(left,top,right,bottom){
     var width=right-left;
     var height=bottom-top;
     var xScale=canvas.width/width;
-    var yScale=canvas.height/height;
+    var yScale=(canvas.height-legendHeight)/height;
     var sig=4;
     if(xScale<yScale){
 	scale=Math.round(xScale*sig)/sig;
@@ -741,21 +791,54 @@ function drawLegend1(){
     c.translate(-5,-y);
     c.globalAlpha=1;
 }*/
+var legendHeight=150;
 function drawLegend(){
-    var y=canvas.height-100;
+    var y=canvas.height-legendHeight;
     if((mouse[1]*scale)+origin.y<y-20){
 	c.globalAlpha=0.25;
     }
     c.translate(5,y);
-    drawCircle(20,0,20,["red","white"]);
-    drawCircle(20,35,10,["green","orange"]);
-    drawEdge(95,60,5,60,"red",15,"+");
-    drawEdge(100,85,5,85,"green",5,"-");
+    drawCircle(20,0,20,["gray"]);
+    drawCircle(20,35,10,["gray"]);
+    drawEdge(95,60,5,60,"green",15,"");
+    drawEdge(100,85,5,85,"green",5,"");
+    drawCircle(450,0,10,["green"]);
+    drawCircle(450,25,10,["white"]);
+    drawCircle(450,50,10,["orange"]);
+    drawCircle(450,75,10,["red"]);
+    drawCircle(830,0,15,["green","orange"]);
+    drawEdge(890,30,815,30,"red",10,"+");
+    drawEdge(890,55,815,55,"red",10,"-");
+    drawEdge(30,110,5,110,"red",10,"");
+    drawEdge(30,135,5,135,"yellow",10,"");
+    drawEdge(230,110,205,110,"orange",10,"");
+    drawEdge(230,135,205,135,"purple",10,"");
+    drawEdge(430,110,405,110,"blue",10,"");
+    drawEdge(430,135,405,135,"pink",10,"");
+    drawEdge(630,110,605,110,"gray",10,"");
+    drawEdge(630,135,605,135,"cyan",10,"");
+    drawEdge(830,110,805,110,"green",10,"");
     c.fillStyle="gray";
-    c.fillText("Very interconnected cancer gene (red)/breast cancer driver (white)",50,7);
-    c.fillText("Less interconnected tumor supressor gene (green)/oncogene (orange)",40,40);
-    c.fillText("Confident, positive interaction when both genes are lowly expressed",115,70);
-    c.fillText("Less confident, negative interaction when both genes are highly expressed",115,95);
+    c.fillText("Relatively interconnected gene",50,7);
+    c.fillText("Relatively isolated gene",40,40);
+    c.fillText("Confident interaction",115,70);
+    c.fillText("Less confident interaction",115,95);
+    c.fillText("Tumor supressor gene (TSG)",470,7);
+    c.fillText("Breast Cancer driver",470,32);
+    c.fillText("Oncogene",470,57);
+    c.fillText("Cancer gene",470,82);
+    c.fillText("TSG/Oncogene",850,7);
+    c.fillText("Positive interaction",910,40);
+    c.fillText("Negative interaction",910,65);
+    c.fillText("low-low (1)",45,120);
+    c.fillText("low-med (2)",45,145);
+    c.fillText("low-high (3)",245,120);
+    c.fillText("med-low (4)",245,145);
+    c.fillText("med-med (5)",445,120);
+    c.fillText("med-high (6)",445,145);
+    c.fillText("high-low (7)",645,120);
+    c.fillText("high-med (8)",645,145);
+    c.fillText("high-high (9)",845,120);
     c.translate(-5,-y);
     c.globalAlpha=1;
 }
@@ -807,6 +890,9 @@ function update(){
 }
 
 $("#filter").click(function(){
+	populateNodes();
+});
+$("#colorFilter").change(function(){
 	populateNodes();
 });
 var graph=new Graph();
