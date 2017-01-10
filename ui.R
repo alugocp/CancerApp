@@ -41,7 +41,7 @@ shinyUI(fluidPage(
 	),
 	fluidRow(
 		mainPanel(
-			tags$canvas(id="canvas",width=200,height=200,onclick="clickCanvas()",onmousedown="mousedown(event)",onmousemove="mousemove(event)",onmouseleave="selected=null"),
+			tags$canvas(id="canvas",onclick="clickCanvas()",onmousedown="mousedown(event)",onmousemove="mousemove(event)",onmouseleave="selected=null"),
 			tags$br(),
 			tags$br(),
 			tags$br(),

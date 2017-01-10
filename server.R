@@ -51,7 +51,7 @@ shinyServer(function(input,output){
 		}
 	
 		rm(binsets,bins,clin,d,km)
-		legend(1,0.4,c("low     ","med     ","high     "),col=colors,lty=c(1,1))
+		legend(1,0.4,c("low","med","high"),col=colors,lty=c(1,1))
 	}
 	graphEdge <- function(gene,gene1,addToTitle,selected.bins){
 		i <- match(gene,genes)
@@ -118,7 +118,7 @@ shinyServer(function(input,output){
 		}
 		
 		rm(clin,bins,bin,km)
-		legend(1,0.6,c("low-low (1)     ","low-med (2)     ","low-high (3)     ","med-low (4)     ","med-med (5)     ","med-high (6)     ","high-low (7)     ","high-med (8)     ","high-high (9)     "),col=colors,lty=c(1,1))
+		legend(1,0.6,c("low-low (1)","low-med (2)","low-high (3)","med-low (4)","med-med (5)","med-high (6)","high-low (7)","high-med (8)","high-high (9)"),col=colors,lty=c(1,1))
 	}
 	graphData <- function(label){
 		plot(fullKm,conf.int=F,mark.time=F,xlab="Time (Days)",ylab="Chance of Survival",main=label)

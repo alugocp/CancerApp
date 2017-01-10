@@ -28,4 +28,4 @@ rm(formula,clin)
 #roles <- subset(roles,roles[,2]!="")
 #rm(names)
 
-runApp("../CancerApp",host="127.0.0.1",port=2017)
+runApp("../CancerApp",host="192.168.0.103",port=2017)
