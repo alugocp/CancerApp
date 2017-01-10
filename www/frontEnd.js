@@ -53,11 +53,11 @@ function mousemove(e){
 	}
 	var x=e.x*scale;
 	var y=e.y*scale;
-	var centerX=graph.x+graph.selectors[0].xOff+Selector.radius;
+	var centerX=graph.x+(graph.selectors[0].xOff*graph.scaleX)+Selector.radius;
 	if(x>=centerX-Selector.radius && x<=centerX+Selector.radius){
-	    var centerY=graph.y+graph.selectors[0].yOff;
-	    if(y>=centerY-Selector.radius && y<=centerY+(Selector.buffer*(graph.selectors.length-1))+Selector.radius){
-		var index=Math.floor((y-(centerY-Selector.radius))/Selector.buffer);
+	    var centerY=graph.y+(graph.selectors[0].yOff*graph.scaleY);
+	    if(y>=centerY-Selector.radius && y<=centerY+(Selector.buffer*graph.scaleY*(graph.selectors.length-1))+Selector.radius){
+		var index=Math.floor((y-(centerY-Selector.radius))/(Selector.buffer*graph.scaleY));
 		graph.selectors[index].color="blue";
 	    }
 	}
@@ -275,6 +275,8 @@ function Graph(){
     this.y=0;
     this.width=700;
     this.height=350;
+    this.scaleX=1;
+    this.scaleY=1;
     Graph.defaultSrc;//="default";
     this.selectors=[];
     this.setCoordinates=function(focusX,focusY,minOffset){
@@ -310,15 +312,15 @@ function Graph(){
     }
 }
 function Selector(graphType,index){
-    Selector.buffer=13;
+    Selector.buffer=14.5;
     Selector.radius=5;
     this.color="gray";
     this.status=false;
-    this.xOff=103;
-    this.yOff=203;
+    this.xOff=142;
+    this.yOff=233;
     if(graphType=="edge"){
-	this.xOff=137;
-	this.yOff=160;
+	this.xOff=187;
+	this.yOff=184;
     }
     this.yOff+=index*Selector.buffer;
     Selector.statusColor=function(s){
@@ -619,10 +621,12 @@ function drawGraph(){
 		c.strokeStyle="black";
 		c.lineWidth=1;
 		c.font="bold 15pt sans-serif";
-		c.scale(graph.width/graph.image.width,graph.height/graph.image.height);
+		graph.scaleX=graph.width/graph.image.width;
+		graph.scaleY=graph.height/graph.image.height;
+		c.scale(graph.scaleX,graph.scaleY);
 		c.drawImage(graph.image,0,0);
-		c.strokeRect(0,0,graph.image.width,graph.image.height);
-		c.scale(graph.image.width/graph.width,graph.image.height/graph.height);
+		c.scale(1/graph.scaleX,1/graph.scaleY);
+		c.strokeRect(0,0,graph.width,graph.height);
 		c.fillText("x",graph.width-20,20);
 		drawSelectors(graph.selectors);
 	    }
@@ -632,7 +636,7 @@ function drawGraph(){
 function drawSelectors(s){
     for(var a=0;a<s.length;a++){
 	c.beginPath();
-	c.arc(s[a].xOff,s[a].yOff,Selector.radius,0,Math.PI*2,true);
+	c.arc(s[a].xOff*graph.scaleX,s[a].yOff*graph.scaleY,Selector.radius,0,Math.PI*2,true);
 	c.closePath();
 	c.fillStyle=s[a].color;
 	c.fill();
