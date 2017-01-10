@@ -125,6 +125,7 @@ function clickCanvas(){
 			Shiny.onInputChange("gene",node.name);
 			Shiny.onInputChange("gene1","none");
 		        graph.setType("node","111");
+			graph.description="";
 		        graph.setCoordinates(node.x,node.y,node.radius+2);
 		        if(last!=node){
 			    last=node;
@@ -138,6 +139,7 @@ function clickCanvas(){
 		if(edgeClick(nodes[edge.start],nodes[edge.end],edge)){
 			setEdgeData(edge,nodes[edge.start].name,nodes[edge.end].name);
 			graph.setType("edge",edge.getBins());
+			graph.description="";
 			/*for(var b=0;b<graph.selectors.length;b++){
 				if(colors[b]!=edge.color){
 					graph.selectors[b].status=false;
@@ -278,6 +280,7 @@ function Graph(){
     this.scaleX=1;
     this.scaleY=1;
     Graph.defaultSrc;//="default";
+    this.description="";
     this.selectors=[];
     this.setCoordinates=function(focusX,focusY,minOffset){
 	this.x=(focusX+minOffset)*scale;
@@ -610,6 +613,28 @@ function establishConnection(gene1,gene2,color,width,sign){
 	}
 }
 
+function formatDescription(){
+	var des=$("#description").text().split(",,,");
+	des[0]=des[0].substring(5);
+	if(des.length==2){
+		des[1]=des[1].substring(0,des[1].length-1);
+	}
+	for(var a=0;a<des.length;a++){
+		var b=1;
+		while(b<des[a].length){
+			if(c.measureText(des[a].substring(0,b)).width>690){
+				while(des[a].substring(b,b+1)!=" "){
+					b--;
+				}
+				des.splice(a+1,0,des[a].substring(b));
+				des[a]=des[a].substring(0,b);
+			}
+			b++;
+		}
+	}
+	graph.description=des;
+}
+
 //drawing
 function drawGraph(){
         if(graph.visible){
@@ -617,6 +642,9 @@ function drawGraph(){
 	    if(graph.image.src==Graph.defaultSrc){
 		drawLoading();
 	    }else{
+		if(graph.description==""){
+			formatDescription();
+		}
 		c.fillStyle="black";
 		c.strokeStyle="black";
 		c.lineWidth=1;
@@ -628,6 +656,7 @@ function drawGraph(){
 		c.scale(1/graph.scaleX,1/graph.scaleY);
 		c.strokeRect(0,0,graph.width,graph.height);
 		c.fillText("x",graph.width-20,20);
+		drawDescription();
 		drawSelectors(graph.selectors);
 	    }
 	    c.translate(-graph.x,-graph.y);
@@ -642,6 +671,16 @@ function drawSelectors(s){
 	c.fill();
 	c.stroke();
     }
+}
+function drawDescription(){
+	c.fillStyle="white";
+	c.fillRect(0,graph.height,graph.width,(graph.description.length*15)+5);
+	c.font="10pt sans-serif";
+	c.fillStyle="black";
+	for(var a=0;a<graph.description.length;a++){
+		c.fillText(graph.description[a],5,(15*(a+1))+graph.height);
+	}
+	c.strokeRect(0,graph.height,graph.width,(graph.description.length*15)+5);
 }
 function drawLoading(){
     c.fillStyle="maroon";
