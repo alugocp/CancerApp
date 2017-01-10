@@ -58,7 +58,7 @@ shinyServer(function(input,output){
 		i1 <- match(gene1,genes)
 		bins <- (bin.map[i,]*3)+bin.map[i1,]+1
 		#flipbins <- (bin.map[i1,]*3)+bin.map[i,]+1
-		graphData(paste(gene," vs. ",gene1,addToTitle))
+		graphData(paste(gene," vs. ",gene1,addToTitle,sep=""))
 		binsets <- split(data.frame(data[,1:2]),bins[])
 		colors <- c("red","yellow","orange","purple","blue","pink","gray","cyan","green")		
 
