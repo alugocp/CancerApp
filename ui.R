@@ -47,6 +47,7 @@ shinyUI(fluidPage(
 			tags$br(),
 			plotOutput("km"),
 			textOutput("nodeData"),
+			textOutput("description"),
 			tags$script(src="frontEnd.js")
 		)
 	)
