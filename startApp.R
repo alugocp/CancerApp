@@ -1,10 +1,13 @@
 # load libraries/data
+library(methods)
 library(survival)
 library(shiny)
+library(rentrez)
 #load("validation.data.mRNA.RData")
 #load("GI.interactions.RData")
 load("data/genes.interactions.data.RData")
 load("data/patient.data.RData")
+#load("data/gene.descriptions.final.RData")
 
 # initial data formatting
 #clin <- clinical[,17:18]
@@ -28,4 +31,4 @@ rm(formula,clin)
 #roles <- subset(roles,roles[,2]!="")
 #rm(names)
 
-runApp("../CancerApp",host="192.168.0.103",port=2017)
+#runApp("../CancerApp",host="127.0.0.1",port=2017)

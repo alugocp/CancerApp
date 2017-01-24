@@ -1,3 +1,4 @@
+source("startApp.R")
 shinyServer(function(input,output){
 	output$km <- renderPlot({
 		if(is.null(input$gene)){
@@ -215,15 +216,33 @@ shinyServer(function(input,output){
 		}
 	})
 	output$description <- renderPrint({
-		#i <- match(input$gene,descriptions[,1])
-		#x <- paste(descriptions[i][1],": ",descriptions[i][2],sep="")
-		x <- "Gene 1: Does stuff. This is a gene that affects stuff in the human body. It does cancer-related stuff and things. It is a gene. This is all bullshit. Did I mention this gene was a gene? Well, it is. I hope this was very informative. Okay, bye now lmao."
+		x <- summary(input$gene)
 		if(!is.null(input$gene1) && input$gene1!="none"){
-			#i <- match(input$gene1,descriptions[,1])
-			#x <- paste(x,",,,",descriptions[i][1],": ",descriptions[i][2],sep="")
-			x <- paste(x,",,,","Gene 2: This is also a gene...you're welcome ;D",sep="")
+			x <- paste(x,summary(input$gene1),sep=",,,")
 		}
+		#i <- match(input$gene,gene.descriptions$symbol)
+		#if(is.null(i)){
+		#	x <- paste(input$gene,": No description available for this gene :(",sep="")
+		#}else{
+		#	x <- paste(input$gene,": ",gene.descriptions$description[i],sep="")
+		#}
+		#if(!is.null(input$gene1) && input$gene1!="none"){
+		#	i <- match(input$gene1,gene.descriptions$symbol)
+		#	if(is.null(i)){
+		#		x <- paste(x,",,,",input$gene1,": No description available for this gene :(",sep="")
+		#	}else{
+		#		x <- paste(x,",,,",input$gene1,": ",gene.descriptions$description[i],sep="")
+		#	}
+		#}
 		print(x)
-		rm(x)
+		#rm(x)
 	})
+	summary <- function(name){
+		id <- entrez_search(db="gene",term=paste(name,"[GENE] AND human[ORGN]",sep=""))$id
+		summary <- entrez_summary(db="gene",id=c(id))$summary
+		if(is.null(summary)){
+			summary <- "No description available :("
+		}
+		return(paste(name,summary,sep=": "))
+	}
 })
